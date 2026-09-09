@@ -45,10 +45,19 @@ export default function DashboardLayout({
 
   const navItems = [
     { name: 'Overview', href: '/overview', icon: LayoutDashboard, active: pathname === '/overview' },
-    { name: 'Users', href: '#', icon: Users, active: false, disabled: true },
-    { name: 'Missions', href: '#', icon: Target, active: false, disabled: true },
-    { name: 'Leaderboards', href: '#', icon: Trophy, active: false, disabled: true },
+    { name: 'Users', href: '/users', icon: Users, active: pathname.startsWith('/users') },
+    { name: 'Missions', href: '/missions', icon: Target, active: pathname.startsWith('/missions') },
+    { name: 'Leaderboards', href: '/leaderboards', icon: Trophy, active: pathname.startsWith('/leaderboards') },
   ];
+
+  const pageTitles: Record<string, string> = {
+    '/overview': 'Dashboard Overview',
+    '/users': 'Users',
+    '/missions': 'Missions',
+    '/leaderboards': 'Leaderboards',
+  };
+  const pageTitle =
+    pageTitles[Object.keys(pageTitles).find((path) => pathname.startsWith(path)) ?? ''] ?? 'Admin Area';
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
@@ -64,20 +73,6 @@ export default function DashboardLayout({
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.name}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 cursor-not-allowed select-none text-sm group"
-                >
-                  <Icon className="w-4.5 h-4.5" />
-                  <span>{item.name}</span>
-                  <span className="ml-auto text-[10px] bg-slate-800/80 px-1.5 py-0.5 rounded text-slate-500 font-semibold uppercase tracking-wider scale-90 group-hover:scale-100 transition-all duration-200">
-                    Soon
-                  </span>
-                </div>
-              );
-            }
             return (
               <Link
                 key={item.name}
@@ -158,20 +153,6 @@ export default function DashboardLayout({
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.name}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 cursor-not-allowed select-none text-sm group"
-                >
-                  <Icon className="w-4.5 h-4.5" />
-                  <span>{item.name}</span>
-                  <span className="ml-auto text-[10px] bg-slate-800/85 px-1.5 py-0.5 rounded text-slate-500 font-semibold uppercase tracking-wider">
-                    Soon
-                  </span>
-                </div>
-              );
-            }
             return (
               <Link
                 key={item.name}
@@ -232,9 +213,7 @@ export default function DashboardLayout({
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h2 className="font-semibold text-slate-200 md:text-lg">
-              {pathname === '/overview' ? 'Dashboard Overview' : 'Admin Area'}
-            </h2>
+            <h2 className="font-semibold text-slate-200 md:text-lg">{pageTitle}</h2>
           </div>
 
           <div className="flex items-center gap-4">

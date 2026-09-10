@@ -4,9 +4,9 @@ import type { LeaderboardEntry } from '@/types/leaderboard';
 import { Trophy } from 'lucide-react';
 
 const RANK_COLOR: Record<number, string> = {
-  1: 'text-amber-400',
-  2: 'text-slate-300',
-  3: 'text-orange-400',
+  1: 'text-gold-ink',
+  2: 'text-silver-ink',
+  3: 'text-bronze-ink',
 };
 
 export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
@@ -30,15 +30,15 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
                   {entry.rank <= 3 && (
                     <Trophy className={`w-4 h-4 ${RANK_COLOR[entry.rank]}`} />
                   )}
-                  <span className={RANK_COLOR[entry.rank] || 'text-slate-400'}>#{entry.rank}</span>
+                  <span className={RANK_COLOR[entry.rank] || 'text-ink-muted'}>#{entry.rank}</span>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-300 text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center text-accent-ink text-xs font-bold shrink-0">
                     {entry.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <p className="font-medium text-slate-100">{entry.displayName}</p>
+                  <p className="font-medium text-ink">{entry.displayName}</p>
                 </div>
               </TableCell>
               <TableCell>{entry.level}</TableCell>
@@ -48,7 +48,7 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
           ))}
           {entries.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-slate-500 py-8">
+              <TableCell colSpan={5} className="text-center text-ink-faint py-8">
                 No leaderboard data available.
               </TableCell>
             </TableRow>

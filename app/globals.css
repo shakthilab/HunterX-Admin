@@ -1,19 +1,88 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  /* Dark theme (default) — matches the existing look, unchanged */
+  --app: #020617;
+  --surface: #0f172a;
+  --surface-inset: #020617;
+  --line: #1e293b;
+  --line-strong: #334155;
+  --ink: #f8fafc;
+  --ink-muted: #94a3b8;
+  --ink-faint: #64748b;
+
+  --accent: #7c3aed;
+  --accent-hover: #8b5cf6;
+  --accent-ink: #a78bfa;
+
+  --ok-ink: #34d399;
+  --warn-ink: #fbbf24;
+  --bad-ink: #f87171;
+  --caution-ink: #fb923c;
+
+  --gold-ink: #fbbf24;
+  --silver-ink: #cbd5e1;
+  --bronze-ink: #fb923c;
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --app: #f8fafc;
+  --surface: #ffffff;
+  --surface-inset: #f1f5f9;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+  --ink-faint: #64748b;
+
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-ink: #7c3aed;
+
+  --ok-ink: #059669;
+  --warn-ink: #d97706;
+  --bad-ink: #dc2626;
+  --caution-ink: #ea580c;
+
+  --gold-ink: #b45309;
+  --silver-ink: #64748b;
+  --bronze-ink: #c2410c;
+
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-app: var(--app);
+  --color-surface: var(--surface);
+  --color-surface-inset: var(--surface-inset);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-ok-ink: var(--ok-ink);
+  --color-warn-ink: var(--warn-ink);
+  --color-bad-ink: var(--bad-ink);
+  --color-caution-ink: var(--caution-ink);
+
+  --color-gold-ink: var(--gold-ink);
+  --color-silver-ink: var(--silver-ink);
+  --color-bronze-ink: var(--bronze-ink);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--app);
+  color: var(--ink);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

@@ -30,7 +30,7 @@ export function MissionsTable({ missions }: { missions: Mission[] }) {
   return (
     <Card className="space-y-4">
       <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
         <Input
           placeholder="Search missions..."
           value={query}
@@ -54,10 +54,10 @@ export function MissionsTable({ missions }: { missions: Mission[] }) {
           {filtered.map((mission) => (
             <TableRow key={mission.id}>
               <TableCell>
-                <p className="font-medium text-slate-100">{mission.title}</p>
-                <p className="text-xs text-slate-500 max-w-xs truncate">{mission.description}</p>
+                <p className="font-medium text-ink">{mission.title}</p>
+                <p className="text-xs text-ink-faint max-w-xs truncate">{mission.description}</p>
               </TableCell>
-              <TableCell className="text-slate-400">{mission.category}</TableCell>
+              <TableCell className="text-ink-muted">{mission.category}</TableCell>
               <TableCell>
                 <Badge variant={DIFFICULTY_VARIANT[mission.difficulty]}>{mission.difficulty}</Badge>
               </TableCell>
@@ -70,7 +70,7 @@ export function MissionsTable({ missions }: { missions: Mission[] }) {
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-slate-500 py-8">
+              <TableCell colSpan={6} className="text-center text-ink-faint py-8">
                 No missions match your search.
               </TableCell>
             </TableRow>

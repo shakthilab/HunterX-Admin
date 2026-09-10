@@ -7,17 +7,17 @@ export default async function UsersPage() {
   const [users, stats] = await Promise.all([getUsers(), getUserStats()]);
 
   const statCards = [
-    { name: 'Total Users', value: stats.totalUsers, icon: UsersIcon, color: 'text-violet-400' },
-    { name: 'Active Today', value: stats.activeToday, icon: Activity, color: 'text-emerald-400' },
-    { name: 'Avg Level', value: stats.avgLevel, icon: TrendingUp, color: 'text-amber-400' },
-    { name: 'Avg Streak', value: `${stats.avgStreak}d`, icon: Flame, color: 'text-orange-400' },
+    { name: 'Total Users', value: stats.totalUsers, icon: UsersIcon, color: 'text-accent-ink' },
+    { name: 'Active Today', value: stats.activeToday, icon: Activity, color: 'text-ok-ink' },
+    { name: 'Avg Level', value: stats.avgLevel, icon: TrendingUp, color: 'text-warn-ink' },
+    { name: 'Avg Streak', value: `${stats.avgStreak}d`, icon: Flame, color: 'text-caution-ink' },
   ];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Users</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Users</h1>
+        <p className="text-sm text-ink-muted mt-1">
           Manage registered players, review progress, and moderate accounts.
         </p>
       </div>
@@ -28,14 +28,14 @@ export default async function UsersPage() {
           return (
             <Card key={stat.name} className="flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
                   {stat.name}
                 </span>
-                <div className={`p-2 rounded-lg bg-slate-950/60 border border-slate-800 ${stat.color}`}>
+                <div className={`p-2 rounded-lg bg-surface-inset/60 border border-line ${stat.color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-slate-100">{stat.value}</p>
+              <p className="text-2xl font-bold text-ink">{stat.value}</p>
             </Card>
           );
         })}

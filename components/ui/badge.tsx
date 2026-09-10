@@ -13,11 +13,11 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
         className={cn(
           'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border',
           {
-            'bg-violet-600/10 text-violet-400 border-violet-500/20': variant === 'default',
-            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': variant === 'success',
-            'bg-amber-500/10 text-amber-400 border-amber-500/20': variant === 'warning',
-            'bg-red-500/10 text-red-400 border-red-500/20': variant === 'danger',
-            'bg-slate-800/60 text-slate-400 border-slate-700': variant === 'muted',
+            'bg-accent/10 text-accent-ink border-accent/20': variant === 'default',
+            'bg-emerald-500/10 text-ok-ink border-emerald-500/20': variant === 'success',
+            'bg-amber-500/10 text-warn-ink border-amber-500/20': variant === 'warning',
+            'bg-red-500/10 text-bad-ink border-red-500/20': variant === 'danger',
+            'bg-line/60 text-ink-muted border-line-strong': variant === 'muted',
           },
           className
         )}

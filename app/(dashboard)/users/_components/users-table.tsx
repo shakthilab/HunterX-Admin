@@ -18,7 +18,7 @@ export function UsersTable({ users }: { users: User[] }) {
   return (
     <Card className="space-y-4">
       <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
         <Input
           placeholder="Search by name or email..."
           value={query}
@@ -43,12 +43,12 @@ export function UsersTable({ users }: { users: User[] }) {
             <TableRow key={user.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-300 text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center text-accent-ink text-xs font-bold shrink-0">
                     {user.displayName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-100">{user.displayName}</p>
-                    <p className="text-xs text-slate-500">{user.email}</p>
+                    <p className="font-medium text-ink">{user.displayName}</p>
+                    <p className="text-xs text-ink-faint">{user.email}</p>
                   </div>
                 </div>
               </TableCell>
@@ -58,14 +58,14 @@ export function UsersTable({ users }: { users: User[] }) {
               <TableCell>{user.level}</TableCell>
               <TableCell>{user.xp.toLocaleString()}</TableCell>
               <TableCell>{user.currentStreak}d</TableCell>
-              <TableCell className="text-slate-400">
+              <TableCell className="text-ink-muted">
                 {new Date(user.createdAt).toLocaleDateString()}
               </TableCell>
             </TableRow>
           ))}
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-slate-500 py-8">
+              <TableCell colSpan={6} className="text-center text-ink-faint py-8">
                 No users match your search.
               </TableCell>
             </TableRow>

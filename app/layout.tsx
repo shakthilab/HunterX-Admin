@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Arise Admin — Habit Gamification Dashboard",
-  description: "Admin portal for managing users, missions, and leaderboards in the Arise habit gamification ecosystem.",
+  description: "Admin portal for managing users, tasks, and progression in the Arise habit gamification ecosystem.",
 };
 
 export default function RootLayout({

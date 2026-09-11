@@ -31,7 +31,7 @@ function LoginForm() {
     try {
       const res = await loginAction(email, password);
       if (res.success) {
-        const redirectTo = searchParams.get('redirectTo') || '/overview';
+        const redirectTo = searchParams.get('redirectTo') || '/';
         router.push(redirectTo);
         router.refresh();
       } else {

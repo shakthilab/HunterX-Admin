@@ -22,15 +22,28 @@ const DEV_MOCK_CREDENTIALS = { email: 'admin@arise.com', password: 'admin123' };
 function buildDevMockUser(): User {
   return {
     id: 'dev_admin_001',
+    hunterId: 'HTR-00001',
     displayName: 'Dev Admin',
     email: DEV_MOCK_CREDENTIALS.email,
     avatarUrl: null,
     level: 99,
     xp: 999999,
+    rank: 'mythic',
     currentStreak: 30,
     longestStreak: 60,
+    dragonStage: 5,
+    heightCm: 178,
+    weightKg: 74,
+    bmi: 23.4,
+    status: 'active',
+    banReason: null,
+    authProvider: 'email',
     role: 'admin',
     createdAt: new Date().toISOString(),
+    activityLog: [],
+    badges: [],
+    rewardClaims: [],
+    feedbackTickets: [],
   };
 }
 

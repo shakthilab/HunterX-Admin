@@ -33,14 +33,7 @@ export default async function proxy(request: NextRequest) {
   // Redirect authenticated admins away from the login page
   if (isPublicRoute && hasToken && isAdmin) {
     const url = request.nextUrl.clone();
-    url.pathname = '/overview';
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect root path to the appropriate page
-  if (pathname === '/') {
-    const url = request.nextUrl.clone();
-    url.pathname = hasToken && isAdmin ? '/overview' : '/login';
+    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 

@@ -9,6 +9,7 @@ import { getTasks } from '@/lib/api/tasks';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { AccentColorDialog } from '@/components/accent-color-dialog';
 import type { User } from '@/types/user';
 import type { Task } from '@/types/task';
 import {
@@ -32,6 +33,7 @@ import {
   ShieldCheck,
   Search,
   KeyRound,
+  Palette,
 } from 'lucide-react';
 
 type NavItem = {
@@ -186,6 +188,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const [user, setUser] = React.useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [themeColorOpen, setThemeColorOpen] = React.useState(false);
 
   React.useEffect(() => {
     getSessionUser().then((sessionUser) => {
@@ -352,6 +355,10 @@ export default function DashboardLayout({
                 <KeyRound className="w-4 h-4" />
                 Auth: {user?.authProvider ?? 'email'}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setThemeColorOpen(true)}>
+                <Palette className="w-4 h-4" />
+                Theme Color
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout} danger>
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -365,6 +372,8 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      <AccentColorDialog open={themeColorOpen} onClose={() => setThemeColorOpen(false)} />
     </div>
   );
 }

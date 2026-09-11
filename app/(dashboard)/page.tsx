@@ -135,7 +135,7 @@ export default async function DashboardPage() {
           <StatCard name="Successful Signups" value={referralOverview.successfulSignups} icon={UserCheck} color="text-ok-ink" />
           <StatCard name="Referral → Paid" value={`${referralOverview.referralToPaidPct}%`} icon={Percent} color="text-accent-ink" />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <Card className="space-y-4">
             <h3 className="text-sm font-semibold text-ink">Top Referrers</h3>
             <TopReferrersTable referrers={topReferrers} />

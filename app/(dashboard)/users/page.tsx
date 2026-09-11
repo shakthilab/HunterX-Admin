@@ -15,7 +15,7 @@ export default async function UsersPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
         <StatCard name="Total Users" value={stats.totalUsers} icon={UsersIcon} color="text-accent-ink" />
         <StatCard name="Active Today" value={stats.activeToday} icon={Activity} color="text-ok-ink" />
         <StatCard name="Avg Level" value={stats.avgLevel} icon={TrendingUp} color="text-warn-ink" />

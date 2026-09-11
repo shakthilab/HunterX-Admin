@@ -92,7 +92,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 1. KPI Strip */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
         <StatCard name="Total Users" value={kpis.totalUsers} icon={Users} color="text-accent-ink" delta={kpis.totalUsersDelta} href="/users" />
         <StatCard name="Active Today" value={kpis.activeToday} icon={Activity} color="text-ok-ink" delta={kpis.activeTodayDelta} href="/users" />
         <StatCard name="New Signups Today" value={kpis.newSignupsToday} icon={UserPlus} color="text-warn-ink" delta={kpis.newSignupsTodayDelta} href="/users" />
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
       {/* 2. Subscription & Revenue */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold tracking-tight text-ink">Subscription & Revenue</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
           <StatCard name="MRR" value={`$${subscriptionOverview.mrr.toLocaleString()}`} icon={DollarSign} color="text-ok-ink" />
           <StatCard name="Active Subscribers" value={subscriptionOverview.activeSubscribers} icon={Users} />
           <StatCard name="New Subs Today / Week" value={`${subscriptionOverview.newSubsToday} / ${subscriptionOverview.newSubsWeek}`} icon={UserPlus} color="text-warn-ink" />
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
       {/* 3. Referrals */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold tracking-tight text-ink">Referrals</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
           <StatCard name="Total Links Sent" value={referralOverview.totalLinksSent} icon={Share2} />
           <StatCard name="Successful Signups" value={referralOverview.successfulSignups} icon={UserCheck} color="text-ok-ink" />
           <StatCard name="Referral → Paid" value={`${referralOverview.referralToPaidPct}%`} icon={Percent} color="text-accent-ink" />
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
       {/* 4. Rewards & Coupons */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold tracking-tight text-ink">Rewards & Coupons</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
           <StatCard name="Issued" value={couponOverview.issued} icon={Gift} />
           <StatCard name="Redeemed" value={couponOverview.redeemed} icon={CheckCircle2} color="text-ok-ink" />
           <StatCard name="Unredeemed" value={couponOverview.unredeemed} icon={Clock} color="text-warn-ink" />

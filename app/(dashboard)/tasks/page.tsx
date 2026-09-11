@@ -36,7 +36,7 @@ export default async function TasksPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
         <StatCard name="Total Tasks" value={stats.totalTasks} icon={Target} color="text-accent-ink" />
         <StatCard name="Active Tasks" value={stats.activeTasks} icon={Zap} color="text-ok-ink" />
         <StatCard name="Completions Today" value={stats.completionsToday} icon={CheckCircle2} color="text-warn-ink" />

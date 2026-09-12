@@ -31,6 +31,7 @@ export default function RootLayout({
     >
       <head>
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="light")document.documentElement.setAttribute("data-theme","light");var a=localStorage.getItem("accentColor");if(a&&a!=="violet")document.documentElement.setAttribute("data-accent",a)}catch(e){}})()`,
           }}

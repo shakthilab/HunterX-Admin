@@ -1,10 +1,10 @@
+import { apiClient } from '@/lib/api/client';
 import type {
   User,
   UserRank,
-  UserActivityLogEntry,
-  UserBadge,
-  UserRewardClaim,
-  UserFeedbackTicket,
+  ApiUser,
+  PaginationInfo,
+  UsersQueryParams,
 } from '@/types/user';
 
 export type UserStats = {
@@ -14,148 +14,160 @@ export type UserStats = {
   avgStreak: number;
 };
 
-const FIRST_NAMES = [
-  'Ava', 'Marcus', 'Priya', 'Diego', 'Grace', 'Noah', 'Liam', 'Sofia', 'Kenji', 'Amara',
-  'Elena', 'Tariq', 'Maya', 'Oscar', 'Zoe', 'Hassan', 'Ingrid', 'Leo', 'Nadia', 'Felix',
-  'Ruby', 'Mateo', 'Anya', 'Caleb', 'Freya',
-];
-const LAST_NAMES = [
-  'Thompson', 'Lee', 'Sharma', 'Fernandez', 'Kim', 'Williams', 'Carter', 'Rossi', 'Sato', 'Okafor',
-  'Petrova', 'Malik', 'Singh', 'Novak', 'Ahmadi', 'Yusuf', 'Larsen', 'Tanaka', 'Haddad', 'Brandt',
-  'Alvarez', 'Costa', 'Ivanov', 'Nakamura', 'Bergström',
-];
-const RANK_ORDER: UserRank[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'mythic'];
-const AUTH_PROVIDERS: User['authProvider'][] = ['email', 'google', 'apple'];
-const BAN_REASONS = ['GPS spoofing detected', 'Abusive chat messages', 'Fraudulent referral activity'];
-const BADGE_LIBRARY = [
-  { name: 'First Steps', description: 'Completed your first task.' },
-  { name: 'Streak Keeper', description: 'Maintained a 7-day streak.' },
-  { name: 'Iron Will', description: 'Maintained a 30-day streak.' },
-  { name: 'Dragon Rising', description: 'Reached Dragon Stage 3.' },
-  { name: 'Community Pillar', description: 'Referred 5 active hunters.' },
-  { name: 'Perfect Week', description: 'Completed every daily task for a week.' },
-];
-const FEEDBACK_SUBJECTS = [
-  'GPS tracking loses signal indoors',
-  'Love the new dragon cosmetics!',
-  'XP not credited after workout',
-  'Streak reset without warning',
-  'Referral coupon never arrived',
-];
+export type UsersListResult = {
+  success: boolean;
+  message?: string;
+  users: ApiUser[];
+  pagination: PaginationInfo;
+};
 
-function seeded(index: number, mod: number, offset = 0): number {
-  return Math.floor(Math.abs(Math.sin(index * 12.9898 + offset) * 43758.5453)) % mod;
+export async function getUserStatsApi(): Promise<UserStats> {
+  try {
+    const response = await apiClient.get<any>('/admin/users/stats');
+    const resData = response.data;
+    if (resData?.success && resData.data?.stats) {
+      const s = resData.data.stats;
+      return {
+        totalUsers: s.total_users ?? 0,
+        activeToday: s.active_today ?? 0,
+        avgLevel: s.avg_level ?? 0,
+        avgStreak: s.avg_streak ?? 0,
+      };
+    }
+  } catch (error) {
+    console.error('Failed to fetch user stats:', error);
+  }
+  return { totalUsers: 0, activeToday: 0, avgLevel: 0, avgStreak: 0 };
 }
 
-function daysAgoIso(days: number, hour = 9): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - days);
-  d.setUTCHours(hour, 0, 0, 0);
-  return d.toISOString();
+export async function getUsersRanksApi(): Promise<string[]> {
+  try {
+    const response = await apiClient.get<any>('/admin/users/ranks');
+    const resData = response.data;
+    if (resData?.success && Array.isArray(resData.data?.ranks)) {
+      return resData.data.ranks;
+    }
+  } catch (error) {
+    console.error('Failed to fetch user ranks:', error);
+  }
+  return ['DORMANT', 'HOLLOW', 'PHANTOM', 'PREDATOR', 'VANGUARD', 'SHADOW', 'SOVEREIGN', 'MONARCH', 'VOID RULER', 'APEX CORE'];
 }
 
-function buildActivityLog(index: number, level: number): UserActivityLogEntry[] {
-  const count = seeded(index, 5, 1) + 1;
-  const titles = ['Morning Run', '10-Minute Meditation', 'Deep Work Block', 'Read 20 Pages', 'Hydration Check'];
-  return Array.from({ length: count }, (_, i) => ({
-    id: `act_${index}_${i}`,
-    taskTitle: titles[(index + i) % titles.length],
-    completedAt: daysAgoIso(i * 2 + 1, 7 + i),
-    xpEarned: 50 + seeded(index, 200, i) ,
-    verificationStatus: (['approved', 'approved', 'pending', 'rejected'] as const)[seeded(index, 4, i + 2)],
-  }));
+export async function getUsersListApi(params: UsersQueryParams = {}): Promise<UsersListResult> {
+  try {
+    const queryParams: Record<string, string> = {};
+
+    if (params.search?.trim()) queryParams.search = params.search.trim();
+    if (params.rank && params.rank !== 'all') queryParams.rank = params.rank;
+    if (params.level && params.level !== 'all') queryParams.level = params.level;
+    if (params.status && params.status !== 'all') queryParams.status = params.status;
+
+    if (params.start_date && params.end_date) {
+      queryParams.start_date = params.start_date;
+      queryParams.end_date = params.end_date;
+    } else if (params.date_preset && params.date_preset !== 'all') {
+      queryParams.date_preset = params.date_preset;
+    }
+
+    if (params.sort_by) queryParams.sort_by = params.sort_by;
+    if (params.page && params.page > 1) queryParams.page = String(params.page);
+    if (params.limit && params.limit !== 20) queryParams.limit = String(params.limit);
+
+    const response = await apiClient.get<any>('/admin/users', { params: queryParams });
+    const resData = response.data;
+
+    if (resData?.success && resData.data) {
+      return {
+        success: true,
+        users: resData.data.users || [],
+        pagination: resData.data.pagination || {
+          page: params.page || 1,
+          limit: params.limit || 20,
+          total_count: (resData.data.users || []).length,
+          total_pages: 1,
+          has_next_page: false,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      message: resData?.message || 'Failed to fetch users.',
+      users: [],
+      pagination: { page: 1, limit: 20, total_count: 0, total_pages: 0, has_next_page: false },
+    };
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error?.message || 'Failed to fetch users.';
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      throw error; // Re-throw auth errors to be handled by caller/route load check
+    }
+    return {
+      success: false,
+      message,
+      users: [],
+      pagination: { page: 1, limit: 20, total_count: 0, total_pages: 0, has_next_page: false },
+    };
+  }
 }
 
-function buildBadges(index: number, level: number): UserBadge[] {
-  const count = Math.min(BADGE_LIBRARY.length, Math.max(0, Math.floor(level / 4)));
-  return BADGE_LIBRARY.slice(0, count).map((badge, i) => ({
-    id: `badge_${index}_${i}`,
-    name: badge.name,
-    description: badge.description,
-    earnedAt: daysAgoIso(30 * (i + 1)),
-  }));
-}
+// Backward compatibility helpers for user details page
+function mapRawUserToUser(raw: any): User {
+  const level = raw.level ?? 1;
+  const heightCm = raw.height_cm ?? raw.heightCm ?? 0;
+  const weightKg = raw.weight_kg ?? raw.weightKg ?? 0;
+  const bmi = raw.bmi ?? (weightKg && heightCm ? Math.round((weightKg / ((heightCm / 100) ** 2)) * 10) / 10 : 0);
 
-function buildRewardClaims(index: number): UserRewardClaim[] {
-  const count = seeded(index, 3, 3);
-  const rewardNames = ['XP Booster Pack', "Hunter's Cloak Skin", 'Streak Freeze Token', 'Gold Dragon Emblem'];
-  const types: UserRewardClaim['type'][] = ['coupon', 'cosmetic', 'xp_boost'];
-  return Array.from({ length: count }, (_, i) => ({
-    id: `rwd_${index}_${i}`,
-    rewardName: rewardNames[(index + i) % rewardNames.length],
-    type: types[(index + i) % types.length],
-    claimedAt: daysAgoIso(10 * (i + 1)),
-  }));
-}
+  const rawRank = String(raw.rank || 'bronze').toLowerCase();
+  const validRanks: UserRank[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'mythic'];
+  const rank: UserRank = validRanks.includes(rawRank as UserRank) ? (rawRank as UserRank) : 'bronze';
 
-function buildFeedbackTickets(index: number): UserFeedbackTicket[] {
-  const count = seeded(index, 2, 4);
-  return Array.from({ length: count }, (_, i) => ({
-    id: `fbk_${index}_${i}`,
-    subject: FEEDBACK_SUBJECTS[(index + i) % FEEDBACK_SUBJECTS.length],
-    message: 'Reported from in-app feedback form.',
-    rating: seeded(index, 5, i + 5) + 1,
-    status: seeded(index, 2, i + 6) === 0 ? 'open' : 'resolved',
-    createdAt: daysAgoIso(5 * (i + 1)),
-  }));
-}
-
-const MOCK_USERS: User[] = Array.from({ length: 25 }, (_, i) => {
-  const firstName = FIRST_NAMES[i];
-  const lastName = LAST_NAMES[i];
-  const level = 1 + seeded(i, 40, 10);
-  const xp = level * (300 + seeded(i, 250, 11));
-  const rank = RANK_ORDER[Math.min(RANK_ORDER.length - 1, Math.floor(level / 8))];
-  const currentStreak = seeded(i, 46, 12);
-  const longestStreak = currentStreak + seeded(i, 20, 13);
-  const isBanned = i % 9 === 8;
-  const heightCm = 155 + seeded(i, 45, 14);
-  const weightKg = 50 + seeded(i, 45, 15);
+  const rawAuth = Array.isArray(raw.auth_providers) && raw.auth_providers.length > 0
+    ? String(raw.auth_providers[0]).toLowerCase()
+    : String(raw.auth_provider || raw.authProvider || 'email').toLowerCase();
+  const authProvider = rawAuth.includes('google') ? 'google' : rawAuth.includes('apple') ? 'apple' : 'email';
 
   return {
-    id: `usr_${1001 + i}`,
-    hunterId: `HTR-${(1001 + i).toString().padStart(5, '0')}`,
-    displayName: `${firstName} ${lastName}`,
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-    avatarUrl: null,
+    id: String(raw.id),
+    hunterId: raw.hunter_id || raw.hunterId || `HTR-${String(raw.id).padStart(5, '0')}`,
+    displayName: raw.name || raw.displayName || raw.email?.split('@')[0] || 'Hunter',
+    email: raw.email || '',
+    avatarUrl: raw.avatar_url || raw.avatar_id || raw.avatarUrl || null,
     level,
-    xp,
+    xp: raw.xp ?? 0,
     rank,
-    currentStreak: isBanned ? 0 : currentStreak,
-    longestStreak,
-    dragonStage: Math.min(5, Math.floor(level / 7)),
+    currentStreak: raw.streak ?? raw.current_streak ?? raw.currentStreak ?? 0,
+    longestStreak: raw.longest_streak ?? raw.longestStreak ?? 0,
+    dragonStage: raw.dragon_stage ?? raw.dragonStage ?? 1,
     heightCm,
     weightKg,
-    bmi: Math.round((weightKg / ((heightCm / 100) ** 2)) * 10) / 10,
-    status: isBanned ? 'banned' : 'active',
-    banReason: isBanned ? BAN_REASONS[i % BAN_REASONS.length] : null,
-    authProvider: AUTH_PROVIDERS[i % AUTH_PROVIDERS.length],
-    role: i === 0 ? 'admin' : 'user',
-    createdAt: daysAgoIso(30 + seeded(i, 500, 16), 8),
-    activityLog: buildActivityLog(i, level),
-    badges: buildBadges(i, level),
-    rewardClaims: buildRewardClaims(i),
-    feedbackTickets: buildFeedbackTickets(i),
+    bmi,
+    status: raw.is_banned || raw.status === 'BANNED' ? 'banned' : 'active',
+    banReason: raw.ban_reason || raw.banReason || null,
+    authProvider,
+    role: (raw.role?.toLowerCase() as 'admin' | 'user') || 'user',
+    createdAt: raw.signup_date || raw.created_at || raw.createdAt || new Date().toISOString(),
+    activityLog: raw.activity_log || raw.activityLog || [],
+    badges: raw.badges || [],
+    rewardClaims: raw.reward_claims || raw.rewardClaims || [],
+    feedbackTickets: raw.feedback_tickets || raw.feedbackTickets || [],
   };
-});
+}
 
 export async function getUsers(): Promise<User[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/users -> { success: true, data: User[] }
-  return MOCK_USERS;
+  const result = await getUsersListApi({ limit: 100 });
+  return result.users.map(mapRawUserToUser);
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/users/:id -> { success: true, data: User }
-  return MOCK_USERS.find((u) => u.id === id) ?? null;
+  try {
+    const users = await getUsers();
+    return users.find((u) => u.id === id) ?? null;
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function getUserStats(): Promise<UserStats> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/users/stats -> { success: true, data: { totalUsers: number, activeToday: number, avgLevel: number, avgStreak: number } }
-  const active = MOCK_USERS.filter((u) => u.status === 'active');
-  return {
-    totalUsers: MOCK_USERS.length,
-    activeToday: 14,
-    avgLevel: Math.round(MOCK_USERS.reduce((sum, u) => sum + u.level, 0) / MOCK_USERS.length),
-    avgStreak: Math.round(active.reduce((sum, u) => sum + u.currentStreak, 0) / active.length),
-  };
+  return getUserStatsApi();
 }

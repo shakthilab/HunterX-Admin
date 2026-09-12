@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RankBadge } from '@/components/rank-badge';
 import type { User } from '@/types/user';
+import { formatDate, formatDateTime } from '@/lib/utils';
 import {
   ArrowLeft,
   Flame,
@@ -94,7 +95,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
             <Badge variant={user.status === 'active' ? 'success' : 'danger'}>{user.status}</Badge>
           </div>
           <p className="text-sm text-ink-faint mt-1">
-            {user.hunterId} · Level {user.level} · Member since {new Date(user.createdAt).toLocaleDateString()}
+            {user.hunterId} · Level {user.level} · Member since {formatDate(user.createdAt)}
           </p>
         </div>
       </Card>
@@ -117,14 +118,14 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
 
           {tab === 'activity' && (
             user.activityLog.length === 0 ? (
-              <EmptyState icon={Activity} message="No completed tasks logged yet." />
+              <EmptyState icon={Activity} message="No data found." />
             ) : (
               <div className="divide-y divide-line/60">
                 {user.activityLog.map((entry) => (
                   <div key={entry.id} className="flex items-center justify-between py-3">
                     <div>
                       <p className="text-sm font-medium text-ink">{entry.taskTitle}</p>
-                      <p className="text-xs text-ink-faint">{new Date(entry.completedAt).toLocaleString()}</p>
+                      <p className="text-xs text-ink-faint">{formatDateTime(entry.completedAt)}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-ok-ink">+{entry.xpEarned} XP</span>
@@ -140,7 +141,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
 
           {tab === 'badges' && (
             user.badges.length === 0 ? (
-              <EmptyState icon={Award} message="No badges earned yet." />
+              <EmptyState icon={Award} message="No data found." />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {user.badges.map((badge) => (
@@ -151,7 +152,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
                     <div>
                       <p className="text-sm font-semibold text-ink">{badge.name}</p>
                       <p className="text-xs text-ink-muted">{badge.description}</p>
-                      <p className="text-xs text-ink-faint mt-1">Earned {new Date(badge.earnedAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-ink-faint mt-1">Earned {formatDate(badge.earnedAt)}</p>
                     </div>
                   </div>
                 ))}
@@ -161,14 +162,14 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
 
           {tab === 'rewards' && (
             user.rewardClaims.length === 0 ? (
-              <EmptyState icon={Gift} message="No rewards claimed yet." />
+              <EmptyState icon={Gift} message="No data found." />
             ) : (
               <div className="divide-y divide-line/60">
                 {user.rewardClaims.map((claim) => (
                   <div key={claim.id} className="flex items-center justify-between py-3">
                     <div>
                       <p className="text-sm font-medium text-ink">{claim.rewardName}</p>
-                      <p className="text-xs text-ink-faint">Claimed {new Date(claim.claimedAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-ink-faint">Claimed {formatDate(claim.claimedAt)}</p>
                     </div>
                     <Badge variant="muted">{claim.type.replace('_', ' ')}</Badge>
                   </div>
@@ -179,7 +180,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
 
           {tab === 'feedback' && (
             user.feedbackTickets.length === 0 ? (
-              <EmptyState icon={MessageSquare} message="No feedback submitted." />
+              <EmptyState icon={MessageSquare} message="No data found." />
             ) : (
               <div className="divide-y divide-line/60">
                 {user.feedbackTickets.map((ticket) => (
@@ -191,7 +192,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
                     <p className="text-xs text-ink-muted">{ticket.message}</p>
                     <p className="text-xs text-ink-faint">
                       {ticket.rating ? `Rating: ${ticket.rating}/5 · ` : ''}
-                      {new Date(ticket.createdAt).toLocaleDateString()}
+                      {formatDate(ticket.createdAt)}
                     </p>
                   </div>
                 ))}

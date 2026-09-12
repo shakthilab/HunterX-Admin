@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import type { Task, TaskType, VerificationMethod } from '@/types/task';
 import { Search, ListChecks, MapPin, HeartPulse, Camera, ClipboardCheck } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 const TYPE_LABEL: Record<TaskType, string> = {
   daily: 'Daily',
@@ -112,13 +113,13 @@ export function TasksTable({ tasks }: { tasks: Task[] }) {
                 <TableCell>
                   <Badge variant={task.status === 'active' ? 'success' : 'muted'}>{task.status}</Badge>
                 </TableCell>
-                <TableCell className="text-ink-muted">{new Date(task.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-ink-muted">{formatDate(task.createdAt)}</TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
-      {filtered.length === 0 && <EmptyState icon={ListChecks} message="No tasks match your filters." />}
+      {filtered.length === 0 && <EmptyState icon={ListChecks} message="No data found." />}
     </Card>
   );
 }

@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import type { Task, TaskAssignmentStats, TaskCompletionLogEntry } from '@/types/task';
 import { ArrowLeft, Pencil, Users, CheckCircle2, Timer, History } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils';
 
 const TAB_ITEMS = [
   { value: 'assignment', label: 'Assignment Stats' },
@@ -73,7 +74,7 @@ export function TaskDetailClient({
 
         {tab === 'history' && (
           completionLog.length === 0 ? (
-            <EmptyState icon={History} message="No completion history yet." />
+            <EmptyState icon={History} message="No data found." />
           ) : (
             <Table>
               <TableHeader>
@@ -88,7 +89,7 @@ export function TaskDetailClient({
                 {completionLog.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">{entry.userName}</TableCell>
-                    <TableCell className="text-ink-muted">{new Date(entry.date).toLocaleString()}</TableCell>
+                    <TableCell className="text-ink-muted">{formatDateTime(entry.date)}</TableCell>
                     <TableCell>{entry.valueAchieved} {task.targetUnit}</TableCell>
                     <TableCell>
                       <Badge variant={entry.verificationStatus === 'approved' ? 'success' : entry.verificationStatus === 'pending' ? 'warning' : 'danger'}>

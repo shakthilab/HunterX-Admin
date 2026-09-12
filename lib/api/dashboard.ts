@@ -11,90 +11,97 @@ import type {
   RankDistributionPoint,
   NeedsAttentionItem,
 } from '@/types/dashboard';
-import { getUsers } from '@/lib/api/users';
+import { getUsers, getUserStats } from '@/lib/api/users';
 import { getPendingReviews } from '@/lib/api/tasks';
-
-function daysAgoIso(days: number, hour = 9): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - days);
-  d.setUTCHours(hour, 0, 0, 0);
-  return d.toISOString();
-}
-
-function dateLabel(daysBack: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - daysBack);
-  return d.toISOString().slice(0, 10);
-}
+import { apiClient } from '@/lib/api/client';
 
 export async function getCoreKpis(): Promise<CoreKpis> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/kpis -> { success: true, data: CoreKpis }
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/kpis');
+    if (response.data?.success && response.data.data) {
+      return response.data.data;
+    }
+  } catch {}
+
+  const stats = await getUserStats();
   return {
-    totalUsers: 25,
-    activeToday: 14,
-    newSignupsToday: 3,
-    activeSubscriptions: 18,
-    tasksCompletedToday: 47,
-    openFeedbackTickets: 6,
-    totalUsersDelta: 4.2,
-    activeTodayDelta: -2.1,
-    newSignupsTodayDelta: 12.5,
-    activeSubscriptionsDelta: 1.8,
-    tasksCompletedTodayDelta: 6.4,
-    openFeedbackTicketsDelta: -8.3,
+    totalUsers: stats.totalUsers,
+    activeToday: stats.activeToday,
+    newSignupsToday: 0,
+    activeSubscriptions: 0,
+    tasksCompletedToday: 0,
+    openFeedbackTickets: 0,
+    totalUsersDelta: 0,
+    activeTodayDelta: 0,
+    newSignupsTodayDelta: 0,
+    activeSubscriptionsDelta: 0,
+    tasksCompletedTodayDelta: 0,
+    openFeedbackTicketsDelta: 0,
   };
 }
 
 export async function getSubscriptionOverview(): Promise<SubscriptionOverview> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/subscriptions -> { success: true, data: SubscriptionOverview }
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/subscriptions');
+    if (response.data?.success && response.data.data) {
+      return response.data.data;
+    }
+  } catch {}
+
   return {
-    mrr: 8420,
-    activeSubscribers: 18,
-    newSubsToday: 2,
-    newSubsWeek: 9,
-    churnedThisWeek: 3,
-    trialToPaidPct: 62,
+    mrr: 0,
+    activeSubscribers: 0,
+    newSubsToday: 0,
+    newSubsWeek: 0,
+    churnedThisWeek: 0,
+    trialToPaidPct: 0,
     statusBreakdown: [
-      { status: 'Active', count: 18 },
-      { status: 'Trialing', count: 5 },
-      { status: 'Past Due', count: 2 },
-      { status: 'Canceled', count: 4 },
+      { status: 'Active', count: 0 },
+      { status: 'Trialing', count: 0 },
+      { status: 'Past Due', count: 0 },
+      { status: 'Canceled', count: 0 },
     ],
   };
 }
 
 export async function getMrrTrend(): Promise<TrendPoint[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/mrr-trend?days=90 -> { success: true, data: TrendPoint[] }
-  return Array.from({ length: 90 }, (_, i) => {
-    const daysBack = 89 - i;
-    const growth = i * 42;
-    const wave = Math.sin(i / 6) * 180;
-    return { date: dateLabel(daysBack), value: Math.max(0, Math.round(3200 + growth + wave)) };
-  });
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/mrr-trend');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+  return [];
 }
 
 export async function getDauTrend(): Promise<TrendPoint[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/dau-trend?days=30 -> { success: true, data: TrendPoint[] }
-  return Array.from({ length: 30 }, (_, i) => {
-    const daysBack = 29 - i;
-    const weekday = new Date(dateLabel(daysBack)).getUTCDay();
-    const weekendDip = weekday === 0 || weekday === 6 ? -3 : 0;
-    const wave = Math.sin(i / 4) * 2.5;
-    return { date: dateLabel(daysBack), value: Math.max(1, Math.round(12 + wave + weekendDip + i * 0.05)) };
-  });
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/dau-trend');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+  return [];
 }
 
 export async function getStreakDropoff(): Promise<{ day: number; usersRemaining: number }[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/streak-dropoff -> { success: true, data: { day: number, usersRemaining: number }[] }
-  const start = 25;
-  return Array.from({ length: 14 }, (_, i) => ({
-    day: i + 1,
-    usersRemaining: Math.max(1, Math.round(start * Math.pow(0.88, i))),
-  }));
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/streak-dropoff');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+  return [];
 }
 
 export async function getRankDistribution(): Promise<RankDistributionPoint[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/rank-distribution -> { success: true, data: RankDistributionPoint[] }
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/rank-distribution');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+
   const users = await getUsers();
   const order = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'mythic'];
   return order.map((rank) => ({
@@ -103,92 +110,99 @@ export async function getRankDistribution(): Promise<RankDistributionPoint[]> {
   }));
 }
 
-const TX_PLANS = ['Hunter Monthly', 'Hunter Annual', 'Guild Pro', 'Guild Pro Annual'];
-const TX_METHODS = ['Visa •••• 4242', 'Mastercard •••• 8823', 'UPI', 'Apple Pay', 'PayPal'];
-const TX_STATUSES: Transaction['status'][] = ['paid', 'paid', 'paid', 'failed', 'pending', 'refunded', 'paid', 'paid', 'failed', 'paid'];
-const TX_USERS = ['Ava Thompson', 'Marcus Lee', 'Priya Sharma', 'Diego Fernandez', 'Grace Kim', 'Noah Williams', 'Liam Carter', 'Sofia Rossi', 'Kenji Sato', 'Amara Okafor'];
-
 export async function getRecentTransactions(): Promise<Transaction[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/transactions?limit=10 -> { success: true, data: Transaction[] }
-  return Array.from({ length: 10 }, (_, i) => ({
-    id: `txn_${5001 + i}`,
-    userName: TX_USERS[i],
-    plan: TX_PLANS[i % TX_PLANS.length],
-    amount: [12, 120, 29, 290][i % 4],
-    status: TX_STATUSES[i],
-    date: daysAgoIso(i, 10 + i),
-    method: TX_METHODS[i % TX_METHODS.length],
-  }));
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/transactions');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+  return [];
 }
 
 export async function getReferralOverview(): Promise<ReferralOverview> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/referrals -> { success: true, data: ReferralOverview }
-  return { totalLinksSent: 342, successfulSignups: 96, referralToPaidPct: 34 };
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/referrals');
+    if (response.data?.success && response.data.data) {
+      return response.data.data;
+    }
+  } catch {}
+
+  return { totalLinksSent: 0, successfulSignups: 0, referralToPaidPct: 0 };
 }
 
 export async function getTopReferrers(): Promise<TopReferrer[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/top-referrers -> { success: true, data: TopReferrer[] }
-  return [
-    { userId: 'usr_1003', userName: 'Priya Sharma', linksSent: 48, signups: 21, paidConversions: 9 },
-    { userId: 'usr_1001', userName: 'Ava Thompson', linksSent: 39, signups: 17, paidConversions: 7 },
-    { userId: 'usr_1005', userName: 'Grace Kim', linksSent: 31, signups: 12, paidConversions: 5 },
-    { userId: 'usr_1002', userName: 'Marcus Lee', linksSent: 24, signups: 9, paidConversions: 3 },
-    { userId: 'usr_1007', userName: 'Liam Carter', linksSent: 18, signups: 6, paidConversions: 2 },
-  ];
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/top-referrers');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+
+  return [];
 }
 
 export async function getRecentReferralActivity(): Promise<ReferralActivity[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/referral-activity -> { success: true, data: ReferralActivity[] }
-  const statuses: ReferralActivity['status'][] = ['converted', 'signed_up', 'pending', 'signed_up', 'converted', 'pending', 'signed_up', 'converted'];
-  const referrers = ['Priya Sharma', 'Ava Thompson', 'Grace Kim', 'Marcus Lee', 'Priya Sharma', 'Liam Carter', 'Ava Thompson', 'Grace Kim'];
-  const referees = ['Oscar Petrova', 'Zoe Malik', 'Hassan Singh', 'Ingrid Novak', 'Leo Ahmadi', 'Nadia Yusuf', 'Felix Larsen', 'Ruby Tanaka'];
-  return Array.from({ length: 8 }, (_, i) => ({
-    id: `ref_${i}`,
-    referrerName: referrers[i],
-    refereeName: referees[i],
-    status: statuses[i],
-    date: daysAgoIso(i, 11),
-  }));
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/referral-activity');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+
+  return [];
 }
 
 export async function getCouponOverview(): Promise<CouponOverview> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/coupons -> { success: true, data: CouponOverview }
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/coupons');
+    if (response.data?.success && response.data.data) {
+      return response.data.data;
+    }
+  } catch {}
+
   return {
-    issued: 210,
-    redeemed: 134,
-    unredeemed: 58,
-    expired: 18,
-    redemptionRatePct: 64,
+    issued: 0,
+    redeemed: 0,
+    unredeemed: 0,
+    expired: 0,
+    redemptionRatePct: 0,
     byTier: [
-      { tier: 'Bronze', used: 40, unused: 15, expired: 5 },
-      { tier: 'Silver', used: 38, unused: 18, expired: 6 },
-      { tier: 'Gold', used: 32, unused: 14, expired: 4 },
-      { tier: 'Platinum', used: 24, unused: 11, expired: 3 },
+      { tier: 'Bronze', used: 0, unused: 0, expired: 0 },
+      { tier: 'Silver', used: 0, unused: 0, expired: 0 },
+      { tier: 'Gold', used: 0, unused: 0, expired: 0 },
+      { tier: 'Platinum', used: 0, unused: 0, expired: 0 },
     ],
   };
 }
 
 export async function getCouponActivityLog(): Promise<CouponActivityEntry[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/coupon-activity -> { success: true, data: CouponActivityEntry[] }
-  const partners = ['FitGear Co.', 'PulseWear', 'GreenBlend Nutrition', 'FitGear Co.', 'TrailForge', 'PulseWear'];
-  const actions: CouponActivityEntry['action'][] = ['redeemed', 'issued', 'redeemed', 'expired', 'issued', 'redeemed'];
-  const users = ['Ava Thompson', 'Marcus Lee', 'Priya Sharma', 'Diego Fernandez', 'Grace Kim', 'Noah Williams'];
-  return Array.from({ length: 6 }, (_, i) => ({
-    id: `cpn_${i}`,
-    code: `ARISE-${(3000 + i * 17).toString(36).toUpperCase()}`,
-    partner: partners[i],
-    userName: users[i],
-    action: actions[i],
-    date: daysAgoIso(i * 2, 13),
-  }));
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/coupon-activity');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+
+  return [];
 }
 
 export async function getNeedsAttention(): Promise<NeedsAttentionItem[]> {
-  // TODO: API - replace with real endpoint. Expected: GET /api/v1/admin/dashboard/needs-attention -> { success: true, data: NeedsAttentionItem[] }
-  const [reviews, users, transactions] = await Promise.all([getPendingReviews(), getUsers(), getRecentTransactions()]);
+  try {
+    const response = await apiClient.get<any>('/admin/dashboard/needs-attention');
+    if (response.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+  } catch {}
+
+  const [reviews, users, transactions] = await Promise.all([
+    getPendingReviews(),
+    getUsers(),
+    getRecentTransactions(),
+  ]);
 
   const items: NeedsAttentionItem[] = [
-    ...reviews.slice(0, 2).map((r) => ({
+    ...reviews.map((r) => ({
       id: `att_review_${r.id}`,
       type: 'gps_review' as const,
       title: `Flagged submission — ${r.taskTitle}`,
@@ -197,8 +211,7 @@ export async function getNeedsAttention(): Promise<NeedsAttentionItem[]> {
       href: '/tasks/review',
     })),
     ...users
-      .flatMap((u) => u.feedbackTickets.filter((t) => t.status === 'open').map((t) => ({ user: u, ticket: t })))
-      .slice(0, 2)
+      .flatMap((u) => (u.feedbackTickets || []).filter((t) => t.status === 'open').map((t) => ({ user: u, ticket: t })))
       .map(({ user, ticket }) => ({
         id: `att_fbk_${ticket.id}`,
         type: 'feedback_ticket' as const,
@@ -209,7 +222,6 @@ export async function getNeedsAttention(): Promise<NeedsAttentionItem[]> {
       })),
     ...transactions
       .filter((t) => t.status === 'failed')
-      .slice(0, 2)
       .map((t) => ({
         id: `att_txn_${t.id}`,
         type: 'failed_payment' as const,
@@ -220,7 +232,6 @@ export async function getNeedsAttention(): Promise<NeedsAttentionItem[]> {
       })),
     ...users
       .filter((u) => u.status === 'banned')
-      .slice(0, 2)
       .map((u) => ({
         id: `att_ban_${u.id}`,
         type: 'banned_user' as const,

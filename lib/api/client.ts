@@ -18,6 +18,19 @@ export const apiClient = axios.create({
   timeout: 15000,
 });
 
+/**
+ * Unwraps an axios call returning the backend's { success, data } envelope.
+ * Non-2xx responses already throw ApiError via the response interceptor below;
+ * this also guards the (unexpected) case of a 200 with success: false.
+ */
+export async function unwrap<T>(request: Promise<{ data: ApiResponse<T> }>): Promise<T> {
+  const { data } = await request;
+  if (!data.success) {
+    throw new ApiError(data.error.code, data.error.message);
+  }
+  return data.data;
+}
+
 async function getAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') {
     try {

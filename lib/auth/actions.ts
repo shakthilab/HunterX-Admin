@@ -114,6 +114,17 @@ export async function loginAction(email: string, password: string) {
 
 export async function logoutAction() {
   const cookieStore = await cookies();
+  const refreshToken = cookieStore.get('refresh_token')?.value;
+
+  if (refreshToken) {
+    try {
+      await apiClient.post('/auth/logout', { refreshToken });
+    } catch {
+      // Best-effort revocation: still clear the local session below even if
+      // the backend is unreachable or the token was already invalid.
+    }
+  }
+
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
   cookieStore.delete('user');

@@ -9,7 +9,8 @@ import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { createTask, updateTask, deriveRewardEligibility } from '@/lib/api/tasks';
+import { deriveRewardEligibility } from '@/lib/api/reward-eligibility';
+import { createTask, updateTask } from '@/lib/api/task-actions';
 import type { Task, TaskInput, TaskType, VerificationMethod } from '@/types/task';
 import { Lock } from 'lucide-react';
 
@@ -100,7 +101,6 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
         const created = await createTask(form);
         router.push(`/tasks/${created.id}`);
       }
-      router.refresh();
     } finally {
       setSubmitting(false);
     }

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RankBadge } from '@/components/rank-badge';
 import type { User } from '@/types/user';
+import { banUser, unbanUser, adjustUserXp, resetUserStreak } from '@/lib/api/user-actions';
 import {
   ArrowLeft,
   Flame,
@@ -50,30 +51,44 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
   const [authDialogOpen, setAuthDialogOpen] = React.useState(false);
   const [xpDelta, setXpDelta] = React.useState('');
   const [xpReason, setXpReason] = React.useState('');
+  const [actionPending, setActionPending] = React.useState(false);
 
   const AuthIcon = AUTH_ICON[user.authProvider];
 
-  const toggleBan = () => {
-    setUser((u) => ({
-      ...u,
-      status: u.status === 'active' ? 'banned' : 'active',
-      banReason: u.status === 'active' ? 'Manually banned by admin' : null,
-      currentStreak: u.status === 'active' ? 0 : u.currentStreak,
-    }));
+  const toggleBan = async () => {
+    setActionPending(true);
+    try {
+      const updated = user.status === 'active' ? await banUser(user.id, 'Manually banned by admin') : await unbanUser(user.id);
+      setUser(updated);
+    } finally {
+      setActionPending(false);
+    }
   };
 
-  const applyXpAdjustment = () => {
+  const applyXpAdjustment = async () => {
     const delta = Number(xpDelta);
     if (!delta || !xpReason.trim()) return;
-    setUser((u) => ({ ...u, xp: Math.max(0, u.xp + delta) }));
-    setXpDelta('');
-    setXpReason('');
-    setXpModalOpen(false);
+    setActionPending(true);
+    try {
+      const updated = await adjustUserXp(user.id, delta, xpReason.trim());
+      setUser(updated);
+      setXpDelta('');
+      setXpReason('');
+      setXpModalOpen(false);
+    } finally {
+      setActionPending(false);
+    }
   };
 
-  const confirmResetStreak = () => {
-    setUser((u) => ({ ...u, currentStreak: 0 }));
-    setStreakDialogOpen(false);
+  const confirmResetStreak = async () => {
+    setActionPending(true);
+    try {
+      const updated = await resetUserStreak(user.id);
+      setUser(updated);
+      setStreakDialogOpen(false);
+    } finally {
+      setActionPending(false);
+    }
   };
 
   return (
@@ -206,15 +221,16 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
           <Button
             variant={user.status === 'active' ? 'danger' : 'secondary'}
             className="w-full justify-start"
+            disabled={actionPending}
             onClick={toggleBan}
           >
             {user.status === 'active' ? <ShieldOff className="w-4 h-4 mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
             {user.status === 'active' ? 'Ban User' : 'Unban User'}
           </Button>
-          <Button variant="outline" className="w-full justify-start" onClick={() => setXpModalOpen(true)}>
+          <Button variant="outline" className="w-full justify-start" disabled={actionPending} onClick={() => setXpModalOpen(true)}>
             <Zap className="w-4 h-4 mr-2" /> Adjust XP
           </Button>
-          <Button variant="outline" className="w-full justify-start" onClick={() => setStreakDialogOpen(true)}>
+          <Button variant="outline" className="w-full justify-start" disabled={actionPending} onClick={() => setStreakDialogOpen(true)}>
             <RotateCcw className="w-4 h-4 mr-2" /> Reset Streak
           </Button>
           <Button variant="outline" className="w-full justify-start" onClick={() => setAuthDialogOpen(true)}>
@@ -232,7 +248,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
         footer={
           <>
             <Button variant="ghost" onClick={() => setXpModalOpen(false)}>Cancel</Button>
-            <Button onClick={applyXpAdjustment} disabled={!xpDelta || !xpReason.trim()}>Apply</Button>
+            <Button onClick={applyXpAdjustment} disabled={!xpDelta || !xpReason.trim() || actionPending}>Apply</Button>
           </>
         }
       >
@@ -263,7 +279,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
         footer={
           <>
             <Button variant="ghost" onClick={() => setStreakDialogOpen(false)}>Cancel</Button>
-            <Button variant="danger" onClick={confirmResetStreak}>Reset Streak</Button>
+            <Button variant="danger" onClick={confirmResetStreak} disabled={actionPending}>Reset Streak</Button>
           </>
         }
       >

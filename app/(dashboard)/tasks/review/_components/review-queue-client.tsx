@@ -7,13 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { PendingReviewItem } from '@/types/task';
+import { decideReview } from '@/lib/api/task-actions';
 import { ArrowLeft, MapPin, Camera, Check, X, ClipboardList, AlertTriangle } from 'lucide-react';
 
 export function ReviewQueueClient({ initialReviews }: { initialReviews: PendingReviewItem[] }) {
   const [reviews, setReviews] = React.useState(initialReviews);
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
 
-  const decide = (id: string, status: 'approved' | 'rejected') => {
-    setReviews((items) => items.map((item) => (item.id === id ? { ...item, status } : item)));
+  const decide = async (id: string, status: 'approved' | 'rejected') => {
+    setPendingId(id);
+    try {
+      const updated = await decideReview(id, status);
+      setReviews((items) => items.map((item) => (item.id === id ? updated : item)));
+    } finally {
+      setPendingId(null);
+    }
   };
 
   const pending = reviews.filter((r) => r.status === 'pending');
@@ -50,10 +58,10 @@ export function ReviewQueueClient({ initialReviews }: { initialReviews: PendingR
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" variant="danger" onClick={() => decide(item.id, 'rejected')}>
+                  <Button size="sm" variant="danger" disabled={pendingId === item.id} onClick={() => decide(item.id, 'rejected')}>
                     <X className="w-3.5 h-3.5 mr-1.5" /> Reject
                   </Button>
-                  <Button size="sm" onClick={() => decide(item.id, 'approved')}>
+                  <Button size="sm" disabled={pendingId === item.id} onClick={() => decide(item.id, 'approved')}>
                     <Check className="w-3.5 h-3.5 mr-1.5" /> Approve
                   </Button>
                 </div>

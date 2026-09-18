@@ -1,22 +1,17 @@
-export type TaskType = 'daily' | 'weekly' | 'monthly' | 'one_time';
-export type TaskStatus = 'active' | 'inactive';
-export type VerificationMethod = 'manual' | 'gps_tracked' | 'health_sync' | 'photo_review';
-export type RewardEligibility = 'standard' | 'bonus' | 'premium';
-export type VerificationStatus = 'approved' | 'pending' | 'rejected';
+// Task shape matches the real backend (Arise-Backend prisma/schema.prisma
+// `tasks` model) — task_type/level_target/recurrence_days etc, not the
+// verification-method/monthly/one-time concepts from the old mock contract.
+// Those old concepts (VerificationMethod, PendingReviewItem) are kept below
+// only for the Review Queue page, which has no backing data model yet and
+// always renders empty (see lib/api/tasks.ts#getPendingReviews) — nothing
+// creates or edits a PendingReviewItem.
 
-export type VerificationConfig = {
-  // manual
-  requiresNote?: boolean;
-  // gps_tracked
-  gpsMinDistanceKm?: number;
-  gpsMaxDurationMin?: number;
-  // health_sync
-  healthMetric?: 'steps' | 'heart_rate' | 'sleep_hours' | 'calories';
-  healthSyncProvider?: 'apple_health' | 'google_fit' | 'fitbit';
-  // photo_review
-  photoRequiresTimestamp?: boolean;
-  photoInstructions?: string;
-};
+export type TaskType = 'DAILY_ADMIN' | 'WEEKLY' | 'DAILY_FIXED';
+export type CreatableTaskType = 'DAILY_ADMIN' | 'WEEKLY';
+export type TaskStatus = 'active' | 'inactive';
+export type LevelTarget = 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type RewardEligibility = 'standard' | 'bonus';
+export type CompletionStatus = 'COMPLETED' | 'SKIPPED' | 'PARTIAL';
 
 export type Task = {
   id: string;
@@ -24,22 +19,41 @@ export type Task = {
   description: string;
   tag: string;
   imageUrl: string | null;
-  type: TaskType;
+  taskType: TaskType;
   isDefaultDaily: boolean;
-  recurrenceDays: string[] | null;
+  isRecurring: boolean;
+  recurrenceDays: number[]; // 0=Sun..6=Sat — WEEKLY only
   startDate: string | null;
   endDate: string | null;
-  levelTarget: number | null;
-  targetValue: number;
+  levelTarget: LevelTarget;
+  targetValue: number | null;
+  targetUnit: string | null;
+  allowsPartial: boolean;
+  xpPartial: number;
+  xpReward: number;
+  rewardEligibility: RewardEligibility;
+  status: TaskStatus;
+  createdAt: string;
+};
+
+// Only DAILY_ADMIN/WEEKLY are admin-creatable — DAILY_FIXED routines are
+// seed-managed (see adminTaskService.js).
+export type TaskInput = {
+  title: string;
+  description: string;
+  tag: string;
+  imageUrl: string | null;
+  taskType: CreatableTaskType;
+  isRecurring: boolean;
+  recurrenceDays: number[];
+  startDate: string | null; // 'YYYY-MM-DD'
+  endDate: string | null; // 'YYYY-MM-DD', required when isRecurring
+  levelTarget: LevelTarget;
+  targetValue: number | null;
   targetUnit: string;
   allowsPartial: boolean;
   xpPartial: number | null;
   xpReward: number;
-  verificationMethod: VerificationMethod;
-  verificationConfig: VerificationConfig;
-  rewardEligibility: RewardEligibility;
-  status: TaskStatus;
-  createdAt: string;
 };
 
 export type TaskStats = {
@@ -52,12 +66,13 @@ export type TaskStats = {
 
 export type TaskCompletionLogEntry = {
   id: string;
-  taskId: string;
   userId: string;
   userName: string;
+  hunterId: string;
   date: string;
-  valueAchieved: number;
-  verificationStatus: VerificationStatus;
+  valueAchieved: number | null;
+  status: CompletionStatus;
+  xpEarned: number;
 };
 
 export type TaskAssignmentStats = {
@@ -66,7 +81,9 @@ export type TaskAssignmentStats = {
   avgCompletionTimeMin: number;
 };
 
-export type TaskInput = Omit<Task, 'id' | 'createdAt' | 'rewardEligibility'>;
+// ── Review Queue (no backing data model yet — see comment above) ──────────
+
+export type VerificationMethod = 'manual' | 'gps_tracked' | 'health_sync' | 'photo_review';
 
 export type PendingReviewItem = {
   id: string;

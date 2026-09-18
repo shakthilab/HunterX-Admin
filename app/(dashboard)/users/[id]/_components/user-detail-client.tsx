@@ -53,14 +53,18 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
   const [xpDelta, setXpDelta] = React.useState('');
   const [xpReason, setXpReason] = React.useState('');
   const [actionPending, setActionPending] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   const AuthIcon = AUTH_ICON[user.authProvider];
 
   const toggleBan = async () => {
     setActionPending(true);
+    setActionError(null);
     try {
       const updated = user.status === 'active' ? await banUser(user.id, 'Manually banned by admin') : await unbanUser(user.id);
       setUser(updated);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update ban status.');
     } finally {
       setActionPending(false);
     }
@@ -70,12 +74,15 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
     const delta = Number(xpDelta);
     if (!delta || !xpReason.trim()) return;
     setActionPending(true);
+    setActionError(null);
     try {
       const updated = await adjustUserXp(user.id, delta, xpReason.trim());
       setUser(updated);
       setXpDelta('');
       setXpReason('');
       setXpModalOpen(false);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to adjust XP.');
     } finally {
       setActionPending(false);
     }
@@ -83,10 +90,13 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
 
   const confirmResetStreak = async () => {
     setActionPending(true);
+    setActionError(null);
     try {
       const updated = await resetUserStreak(user.id);
       setUser(updated);
       setStreakDialogOpen(false);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to reset streak.');
     } finally {
       setActionPending(false);
     }
@@ -237,6 +247,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
           <Button variant="outline" className="w-full justify-start" onClick={() => setAuthDialogOpen(true)}>
             <KeyRound className="w-4 h-4 mr-2" /> View Auth Details
           </Button>
+          {actionError && <p className="text-xs text-bad-ink font-medium">{actionError}</p>}
         </Card>
       </div>
 
@@ -268,6 +279,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
             value={xpReason}
             onChange={(e) => setXpReason(e.target.value)}
           />
+          {actionError && xpModalOpen && <p className="text-xs text-bad-ink font-medium">{actionError}</p>}
         </div>
       </Dialog>
 
@@ -285,6 +297,7 @@ export function UserDetailClient({ user: initialUser }: { user: User }) {
         }
       >
         <p className="text-sm text-ink-muted">Current streak: {user.currentStreak} days</p>
+        {actionError && streakDialogOpen && <p className="text-xs text-bad-ink font-medium mt-2">{actionError}</p>}
       </Dialog>
 
       {/* Auth details */}

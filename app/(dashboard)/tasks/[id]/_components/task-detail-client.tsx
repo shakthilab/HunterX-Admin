@@ -34,11 +34,17 @@ export function TaskDetailClient({
         <Link href="/tasks" className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Tasks
         </Link>
-        <Link href={`/tasks/${task.id}/edit`}>
-          <Button variant="outline" size="sm">
+        {task.taskType === 'DAILY_FIXED' ? (
+          <Button variant="outline" size="sm" disabled title="Seed-managed routine tasks can't be edited">
             <Pencil className="w-3.5 h-3.5 mr-2" /> Edit Task
           </Button>
-        </Link>
+        ) : (
+          <Link href={`/tasks/${task.id}/edit`}>
+            <Button variant="outline" size="sm">
+              <Pencil className="w-3.5 h-3.5 mr-2" /> Edit Task
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Card className="space-y-1">
@@ -52,11 +58,11 @@ export function TaskDetailClient({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Tag" value={task.tag} />
-        <Field label="Type" value={task.type.replace('_', ' ')} />
-        <Field label="Target" value={`${task.targetValue} ${task.targetUnit}`} />
+        <Field label="Type" value={task.taskType.replace('_', ' ')} />
+        <Field label="Target" value={task.targetValue != null && task.targetUnit ? `${task.targetValue} ${task.targetUnit}` : 'None'} />
         <Field label="XP Reward" value={`${task.xpReward} XP`} />
-        <Field label="Verification" value={task.verificationMethod.replace('_', ' ')} />
-        <Field label="Level Target" value={task.levelTarget ? `Level ${task.levelTarget}+` : 'None'} />
+        <Field label="Recurring" value={task.isRecurring ? 'Yes' : 'No'} />
+        <Field label="Level Target" value={task.levelTarget === 'ALL' ? 'All Levels' : task.levelTarget} />
         <Field label="Allows Partial" value={task.allowsPartial ? `Yes (${task.xpPartial} XP)` : 'No'} />
         <Field label="Default Daily" value={task.isDefaultDaily ? 'Yes' : 'No'} />
       </div>
@@ -82,7 +88,8 @@ export function TaskDetailClient({
                   <TableHead>User</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Value Achieved</TableHead>
-                  <TableHead>Verification Status</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>XP Earned</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -90,12 +97,13 @@ export function TaskDetailClient({
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">{entry.userName}</TableCell>
                     <TableCell className="text-ink-muted">{formatDateTime(entry.date)}</TableCell>
-                    <TableCell>{entry.valueAchieved} {task.targetUnit}</TableCell>
+                    <TableCell>{entry.valueAchieved != null ? `${entry.valueAchieved} ${task.targetUnit ?? ''}` : '—'}</TableCell>
                     <TableCell>
-                      <Badge variant={entry.verificationStatus === 'approved' ? 'success' : entry.verificationStatus === 'pending' ? 'warning' : 'danger'}>
-                        {entry.verificationStatus}
+                      <Badge variant={entry.status === 'COMPLETED' ? 'success' : entry.status === 'PARTIAL' ? 'warning' : 'muted'}>
+                        {entry.status.toLowerCase()}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-ok-ink font-medium">+{entry.xpEarned} XP</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

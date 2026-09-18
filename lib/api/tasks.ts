@@ -10,42 +10,15 @@
 // Mutating actions (create/update/review decision) live in ./task-actions.ts.
 
 import { apiClient } from '@/lib/api/client';
-import { deriveRewardEligibility } from '@/lib/api/reward-eligibility';
+import { mapRawTaskToTask } from '@/lib/api/task-mapper';
 import type {
   Task,
   TaskStats,
-  TaskType,
-  VerificationMethod,
+  CompletionStatus,
   TaskCompletionLogEntry,
   TaskAssignmentStats,
   PendingReviewItem,
 } from '@/types/task';
-
-function mapRawTaskToTask(raw: any): Task {
-  return {
-    id: String(raw.id),
-    title: raw.title || 'Untitled Task',
-    description: raw.description || '',
-    tag: raw.tag || 'General',
-    imageUrl: raw.image_url || raw.imageUrl || null,
-    type: (raw.type?.toLowerCase() as TaskType) || 'daily',
-    isDefaultDaily: Boolean(raw.is_default_daily ?? raw.isDefaultDaily),
-    recurrenceDays: raw.recurrence_days || raw.recurrenceDays || null,
-    startDate: raw.start_date || raw.startDate || new Date().toISOString(),
-    endDate: raw.end_date || raw.endDate || null,
-    levelTarget: raw.level_target ?? raw.levelTarget ?? null,
-    targetValue: raw.target_value ?? raw.targetValue ?? 1,
-    targetUnit: raw.target_unit || raw.targetUnit || 'unit',
-    allowsPartial: Boolean(raw.allows_partial ?? raw.allowsPartial ?? true),
-    xpPartial: raw.xp_partial ?? raw.xpPartial ?? null,
-    xpReward: raw.xp_reward ?? raw.xpReward ?? 50,
-    verificationMethod: (raw.verification_method || raw.verificationMethod || 'manual') as VerificationMethod,
-    verificationConfig: raw.verification_config || raw.verificationConfig || {},
-    rewardEligibility: deriveRewardEligibility(raw.xp_reward ?? raw.xpReward ?? 50, raw.verification_method || raw.verificationMethod || 'manual'),
-    status: raw.status?.toLowerCase() === 'inactive' ? 'inactive' : 'active',
-    createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
-  };
-}
 
 export async function getTasks(): Promise<Task[]> {
   try {
@@ -95,12 +68,25 @@ export async function getTaskStats(): Promise<TaskStats> {
   }
 }
 
+function mapRawCompletionToEntry(raw: any): TaskCompletionLogEntry {
+  return {
+    id: String(raw.id),
+    userId: String(raw.user_id),
+    userName: raw.user_name || 'Hunter',
+    hunterId: raw.hunter_id || '',
+    date: raw.date || new Date().toISOString(),
+    valueAchieved: raw.value_achieved ?? null,
+    status: (raw.status as CompletionStatus) || 'COMPLETED',
+    xpEarned: raw.xp_earned ?? 0,
+  };
+}
+
 export async function getTaskCompletionLog(taskId: string): Promise<TaskCompletionLogEntry[]> {
   try {
     const response = await apiClient.get<any>(`/admin/tasks/${taskId}/completions`);
     const resData = response.data;
     if (resData?.success && Array.isArray(resData.data)) {
-      return resData.data;
+      return resData.data.map(mapRawCompletionToEntry);
     }
     return [];
   } catch (error) {
@@ -113,7 +99,12 @@ export async function getTaskAssignmentStats(taskId: string): Promise<TaskAssign
     const response = await apiClient.get<any>(`/admin/tasks/${taskId}/assignment-stats`);
     const resData = response.data;
     if (resData?.success && resData.data) {
-      return resData.data;
+      const s = resData.data;
+      return {
+        usersAssigned: s.users_assigned ?? 0,
+        completionRate: s.completion_rate ?? 0,
+        avgCompletionTimeMin: s.avg_completion_time_min ?? 0,
+      };
     }
     return { usersAssigned: 0, completionRate: 0, avgCompletionTimeMin: 0 };
   } catch (error) {

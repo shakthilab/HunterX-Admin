@@ -11,38 +11,44 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deriveRewardEligibility } from '@/lib/api/reward-eligibility';
 import { createTask, updateTask } from '@/lib/api/task-actions';
-import type { Task, TaskInput, TaskType, VerificationMethod } from '@/types/task';
-import { Lock } from 'lucide-react';
+import type { Task, TaskInput, CreatableTaskType, LevelTarget } from '@/types/task';
+import { Lock, AlertCircle } from 'lucide-react';
 
-const WEEKDAYS = [
-  { value: 'mon', label: 'Mon' },
-  { value: 'tue', label: 'Tue' },
-  { value: 'wed', label: 'Wed' },
-  { value: 'thu', label: 'Thu' },
-  { value: 'fri', label: 'Fri' },
-  { value: 'sat', label: 'Sat' },
-  { value: 'sun', label: 'Sun' },
+// 0 = Sun .. 6 = Sat, matching the backend's recurrence_days convention
+// (adminTaskService.js). Displayed Mon-first for a familiar week layout.
+const WEEKDAYS: { value: number; label: string }[] = [
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+  { value: 0, label: 'Sun' },
 ];
+
+const LEVEL_TARGET_OPTIONS: LevelTarget[] = ['ALL', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+
+// Mirrors adminTaskService.js#XP_CAP — daily admin-authored tasks cap at 10
+// XP, weekly quests at 70, keeping admin-created tasks in line with the
+// fixed routine tasks instead of skewing the XP economy.
+const XP_CAP: Record<CreatableTaskType, number> = { DAILY_ADMIN: 10, WEEKLY: 70 };
 
 const DEFAULT_FORM: TaskInput = {
   title: '',
   description: '',
   tag: '',
   imageUrl: '',
-  type: 'daily',
-  isDefaultDaily: false,
-  recurrenceDays: null,
+  taskType: 'DAILY_ADMIN',
+  isRecurring: false,
+  recurrenceDays: [],
   startDate: null,
   endDate: null,
-  levelTarget: null,
+  levelTarget: 'ALL',
   targetValue: 1,
   targetUnit: '',
   allowsPartial: false,
   xpPartial: null,
-  xpReward: 100,
-  verificationMethod: 'manual',
-  verificationConfig: { requiresNote: false },
-  status: 'active',
+  xpReward: 10,
 };
 
 function toDateInput(value: string | null) {
@@ -52,47 +58,62 @@ function toDateInput(value: string | null) {
 export function TaskForm({ initialTask }: { initialTask?: Task }) {
   const router = useRouter();
   const [form, setForm] = React.useState<TaskInput>(
-    initialTask
+    initialTask && (initialTask.taskType === 'DAILY_ADMIN' || initialTask.taskType === 'WEEKLY')
       ? {
           title: initialTask.title,
           description: initialTask.description,
           tag: initialTask.tag,
           imageUrl: initialTask.imageUrl ?? '',
-          type: initialTask.type,
-          isDefaultDaily: initialTask.isDefaultDaily,
+          taskType: initialTask.taskType,
+          isRecurring: initialTask.isRecurring,
           recurrenceDays: initialTask.recurrenceDays,
-          startDate: initialTask.startDate,
-          endDate: initialTask.endDate,
+          // Normalized to plain 'YYYY-MM-DD' up front (matching what the date
+          // inputs' onChange produces) — the backend rejects the full ISO
+          // datetime string these come back from the API as.
+          startDate: toDateInput(initialTask.startDate) || null,
+          endDate: toDateInput(initialTask.endDate) || null,
           levelTarget: initialTask.levelTarget,
-          targetValue: initialTask.targetValue,
-          targetUnit: initialTask.targetUnit,
+          targetValue: initialTask.targetValue ?? 1,
+          targetUnit: initialTask.targetUnit ?? '',
           allowsPartial: initialTask.allowsPartial,
           xpPartial: initialTask.xpPartial,
           xpReward: initialTask.xpReward,
-          verificationMethod: initialTask.verificationMethod,
-          verificationConfig: initialTask.verificationConfig,
-          status: initialTask.status,
         }
       : DEFAULT_FORM
   );
   const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const update = <K extends keyof TaskInput>(key: K, value: TaskInput[K]) =>
     setForm((f: TaskInput) => ({ ...f, [key]: value }));
 
-  const toggleRecurrenceDay = (day: string) => {
-    const current = form.recurrenceDays ?? [];
-    update('recurrenceDays', current.includes(day) ? current.filter((d: string) => d !== day) : [...current, day]);
+  const changeTaskType = (taskType: CreatableTaskType) => {
+    const cap = XP_CAP[taskType];
+    setForm((f) => ({ ...f, taskType, xpReward: Math.min(f.xpReward, cap), recurrenceDays: taskType === 'WEEKLY' ? f.recurrenceDays : [] }));
   };
 
-  const rewardEligibility = deriveRewardEligibility(form.xpReward, form.verificationMethod);
+  const toggleRecurrenceDay = (day: number) => {
+    const current = form.recurrenceDays ?? [];
+    update('recurrenceDays', current.includes(day) ? current.filter((d) => d !== day) : [...current, day]);
+  };
 
-  const isValid = form.title.trim().length > 0 && form.targetUnit.trim().length > 0 && form.xpReward > 0;
+  const cap = XP_CAP[form.taskType];
+  const rewardEligibility = deriveRewardEligibility(form.xpReward, form.taskType);
+
+  const isValid =
+    form.title.trim().length > 0 &&
+    form.targetUnit.trim().length > 0 &&
+    form.xpReward > 0 &&
+    form.xpReward <= cap &&
+    !!form.startDate &&
+    (form.taskType !== 'WEEKLY' || form.recurrenceDays.length > 0) &&
+    (!form.isRecurring || !!form.endDate);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setSubmitting(true);
+    setError(null);
     try {
       if (initialTask) {
         await updateTask(initialTask.id, form);
@@ -101,6 +122,8 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
         const created = await createTask(form);
         router.push(`/tasks/${created.id}`);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save this task.');
     } finally {
       setSubmitting(false);
     }
@@ -121,27 +144,27 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
       <Card className="space-y-5">
         <SectionHeader title="Task Type & Schedule" description="How often this task recurs and who it targets." />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Select label="Type" value={form.type} onChange={(e) => update('type', e.target.value as TaskType)}>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="one_time">One-Time</option>
+          <Select label="Type" value={form.taskType} onChange={(e) => changeTaskType(e.target.value as CreatableTaskType)}>
+            <option value="DAILY_ADMIN">Daily</option>
+            <option value="WEEKLY">Weekly</option>
           </Select>
-          <Input
-            label="Level Target (optional)"
-            type="number"
-            placeholder="Minimum hunter level"
-            value={form.levelTarget ?? ''}
-            onChange={(e) => update('levelTarget', e.target.value ? Number(e.target.value) : null)}
-          />
+          <Select label="Level Target" value={form.levelTarget} onChange={(e) => update('levelTarget', e.target.value as LevelTarget)}>
+            {LEVEL_TARGET_OPTIONS.map((lvl) => (
+              <option key={lvl} value={lvl}>{lvl === 'ALL' ? 'All Levels' : lvl.charAt(0) + lvl.slice(1).toLowerCase()}</option>
+            ))}
+          </Select>
         </div>
         <Switch
-          checked={form.isDefaultDaily}
-          onCheckedChange={(checked) => update('isDefaultDaily', checked)}
-          label="Is Default Daily"
-          description="Automatically assigned to every hunter's daily task list."
+          checked={form.isRecurring}
+          onCheckedChange={(checked) => update('isRecurring', checked)}
+          label="Recurring"
+          description={
+            form.taskType === 'WEEKLY'
+              ? 'On: repeats every week through an end date you set. Off: a single 7-day window.'
+              : 'On: repeats every day through an end date you set. Off: assignable on start date only.'
+          }
         />
-        {form.type === 'weekly' && (
+        {form.taskType === 'WEEKLY' && (
           <div className="space-y-2">
             <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Recurrence Days</label>
             <div className="flex flex-wrap gap-2">
@@ -168,14 +191,18 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
             label="Start Date"
             type="date"
             value={toDateInput(form.startDate)}
-            onChange={(e) => update('startDate', e.target.value ? new Date(e.target.value).toISOString() : null)}
+            onChange={(e) => update('startDate', e.target.value || null)}
+            required
           />
-          <Input
-            label="End Date (optional)"
-            type="date"
-            value={toDateInput(form.endDate)}
-            onChange={(e) => update('endDate', e.target.value ? new Date(e.target.value).toISOString() : null)}
-          />
+          {form.isRecurring && (
+            <Input
+              label="End Date"
+              type="date"
+              value={toDateInput(form.endDate)}
+              onChange={(e) => update('endDate', e.target.value || null)}
+              required
+            />
+          )}
         </div>
       </Card>
 
@@ -185,13 +212,19 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
           <Input
             label="Target Value"
             type="number"
-            value={form.targetValue}
-            onChange={(e) => update('targetValue', Number(e.target.value))}
-            required
+            value={form.targetValue ?? ''}
+            onChange={(e) => update('targetValue', e.target.value ? Number(e.target.value) : null)}
           />
           <Input label="Unit" placeholder="e.g. km, minutes, steps" value={form.targetUnit} onChange={(e) => update('targetUnit', e.target.value)} required />
         </div>
-        <Input label="XP Reward" type="number" value={form.xpReward} onChange={(e) => update('xpReward', Number(e.target.value))} required />
+        <Input
+          label={`XP Reward (max ${cap} for ${form.taskType === 'WEEKLY' ? 'Weekly' : 'Daily'} tasks)`}
+          type="number"
+          max={cap}
+          value={form.xpReward}
+          onChange={(e) => update('xpReward', Number(e.target.value))}
+          required
+        />
         <Switch
           checked={form.allowsPartial}
           onCheckedChange={(checked) => update('allowsPartial', checked)}
@@ -202,115 +235,29 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
           <Input
             label="Partial XP"
             type="number"
+            max={form.xpReward - 1}
             value={form.xpPartial ?? ''}
             onChange={(e) => update('xpPartial', e.target.value ? Number(e.target.value) : null)}
           />
         )}
       </Card>
 
-      <Card className="space-y-5">
-        <SectionHeader title="Verification Method" description="How submissions are confirmed." />
-        <Select
-          label="Method"
-          value={form.verificationMethod}
-          onChange={(e) => {
-            const method = e.target.value as VerificationMethod;
-            update('verificationMethod', method);
-            update(
-              'verificationConfig',
-              method === 'manual'
-                ? { requiresNote: false }
-                : method === 'gps_tracked'
-                  ? { gpsMinDistanceKm: 1, gpsMaxDurationMin: 60 }
-                  : method === 'health_sync'
-                    ? { healthMetric: 'steps', healthSyncProvider: 'apple_health' }
-                    : { photoRequiresTimestamp: true, photoInstructions: '' }
-            );
-          }}
-        >
-          <option value="manual">Manual</option>
-          <option value="gps_tracked">GPS Tracked</option>
-          <option value="health_sync">Health Sync</option>
-          <option value="photo_review">Photo Review</option>
-        </Select>
-
-        {form.verificationMethod === 'manual' && (
-          <Switch
-            checked={!!form.verificationConfig.requiresNote}
-            onCheckedChange={(checked) => update('verificationConfig', { ...form.verificationConfig, requiresNote: checked })}
-            label="Requires Note"
-            description="Hunter must submit a short note describing completion."
-          />
-        )}
-
-        {form.verificationMethod === 'gps_tracked' && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Min Distance (km)"
-              type="number"
-              value={form.verificationConfig.gpsMinDistanceKm ?? ''}
-              onChange={(e) => update('verificationConfig', { ...form.verificationConfig, gpsMinDistanceKm: Number(e.target.value) })}
-            />
-            <Input
-              label="Max Duration (min)"
-              type="number"
-              value={form.verificationConfig.gpsMaxDurationMin ?? ''}
-              onChange={(e) => update('verificationConfig', { ...form.verificationConfig, gpsMaxDurationMin: Number(e.target.value) })}
-            />
-          </div>
-        )}
-
-        {form.verificationMethod === 'health_sync' && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Select
-              label="Health Metric"
-              value={form.verificationConfig.healthMetric ?? 'steps'}
-              onChange={(e) => update('verificationConfig', { ...form.verificationConfig, healthMetric: e.target.value as 'steps' | 'heart_rate' | 'sleep_hours' | 'calories' })}
-            >
-              <option value="steps">Steps</option>
-              <option value="heart_rate">Heart Rate</option>
-              <option value="sleep_hours">Sleep Hours</option>
-              <option value="calories">Calories</option>
-            </Select>
-            <Select
-              label="Sync Provider"
-              value={form.verificationConfig.healthSyncProvider ?? 'apple_health'}
-              onChange={(e) => update('verificationConfig', { ...form.verificationConfig, healthSyncProvider: e.target.value as 'apple_health' | 'google_fit' | 'fitbit' })}
-            >
-              <option value="apple_health">Apple Health</option>
-              <option value="google_fit">Google Fit</option>
-              <option value="fitbit">Fitbit</option>
-            </Select>
-          </div>
-        )}
-
-        {form.verificationMethod === 'photo_review' && (
-          <div className="space-y-4">
-            <Switch
-              checked={!!form.verificationConfig.photoRequiresTimestamp}
-              onCheckedChange={(checked) => update('verificationConfig', { ...form.verificationConfig, photoRequiresTimestamp: checked })}
-              label="Requires Timestamp"
-              description="Photo metadata must include a valid capture timestamp."
-            />
-            <Textarea
-              label="Photo Instructions"
-              rows={2}
-              value={form.verificationConfig.photoInstructions ?? ''}
-              onChange={(e) => update('verificationConfig', { ...form.verificationConfig, photoInstructions: e.target.value })}
-            />
-          </div>
-        )}
-      </Card>
-
       <Card className="space-y-3">
-        <SectionHeader title="Reward Eligibility" description="Auto-derived from XP reward and verification method." />
+        <SectionHeader title="Reward Eligibility" description="Auto-derived from the XP reward relative to this task type's cap." />
         <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg border border-line bg-surface-inset/30 text-ink-muted">
           <Lock className="w-3.5 h-3.5 shrink-0" />
-          <Badge variant={rewardEligibility === 'premium' ? 'default' : rewardEligibility === 'bonus' ? 'warning' : 'muted'}>
+          <Badge variant={rewardEligibility === 'bonus' ? 'warning' : 'muted'}>
             {rewardEligibility}
           </Badge>
         </div>
       </Card>
+
+      {error && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-bad-ink/20 bg-bad-ink/10 text-bad-ink text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-3">
         <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>

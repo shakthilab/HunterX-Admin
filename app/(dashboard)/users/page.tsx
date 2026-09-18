@@ -1,28 +1,49 @@
-import { getUsers, getUserStats } from '@/lib/api/users';
-import { StatCard } from '@/components/stat-card';
-import { Users as UsersIcon, Activity, TrendingUp, Flame } from 'lucide-react';
-import { UsersTable } from './_components/users-table';
+import * as React from 'react';
+import { getSessionUser } from '@/lib/auth/actions';
+import { redirect } from 'next/navigation';
+import { UsersClient } from './_components/users-client';
+import { Card } from '@/components/ui/card';
+import { ShieldAlert } from 'lucide-react';
 
 export default async function UsersPage() {
-  const [users, stats] = await Promise.all([getUsers(), getUserStats()]);
+  const user = await getSessionUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  if (user.role && user.role.toLowerCase() !== 'admin') {
+    return (
+      <div className="max-w-4xl mx-auto py-12">
+        <Card className="flex flex-col items-center justify-center p-12 text-center space-y-4 border-red-500/20 bg-red-500/5">
+          <div className="p-3 rounded-full bg-red-500/10 text-bad-ink">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-ink">403 — Forbidden</h1>
+          <p className="text-sm text-ink-muted max-w-md">
+            Access Denied. You do not have administrator permissions to view or manage users.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Users</h1>
-        <p className="text-sm text-ink-muted mt-1">
-          Manage registered players, review progress, and moderate accounts.
-        </p>
-      </div>
-
-      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
-        <StatCard name="Total Users" value={stats.totalUsers} icon={UsersIcon} color="text-accent-ink" />
-        <StatCard name="Active Today" value={stats.activeToday} icon={Activity} color="text-ok-ink" />
-        <StatCard name="Avg Level" value={stats.avgLevel} icon={TrendingUp} color="text-warn-ink" />
-        <StatCard name="Avg Streak" value={`${stats.avgStreak}d`} icon={Flame} color="text-caution-ink" />
-      </div>
-
-      <UsersTable users={users} />
-    </div>
+    <React.Suspense
+      fallback={
+        <div className="space-y-8 max-w-7xl mx-auto animate-pulse">
+          <div className="h-8 w-48 bg-line/50 rounded" />
+          <div className="grid gap-4 grid-cols-4">
+            <div className="h-24 bg-line/40 rounded-xl" />
+            <div className="h-24 bg-line/40 rounded-xl" />
+            <div className="h-24 bg-line/40 rounded-xl" />
+            <div className="h-24 bg-line/40 rounded-xl" />
+          </div>
+          <div className="h-96 bg-line/30 rounded-xl" />
+        </div>
+      }
+    >
+      <UsersClient />
+    </React.Suspense>
   );
 }

@@ -31,7 +31,7 @@ export async function unwrap<T>(request: Promise<{ data: ApiResponse<T> }>): Pro
   return data.data;
 }
 
-async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') {
     try {
       const { cookies } = await import('next/headers');
@@ -46,7 +46,7 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
-async function getRefreshToken(): Promise<string | null> {
+export async function getRefreshToken(): Promise<string | null> {
   if (typeof window === 'undefined') {
     try {
       const { cookies } = await import('next/headers');
@@ -61,13 +61,23 @@ async function getRefreshToken(): Promise<string | null> {
   }
 }
 
-async function setTokens(accessToken: string, refreshToken: string): Promise<void> {
+export async function setTokens(accessToken: string, refreshToken: string): Promise<void> {
   if (typeof window === 'undefined') {
     try {
       const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
-      cookieStore.set('access_token', accessToken, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-      cookieStore.set('refresh_token', refreshToken, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+      cookieStore.set('access_token', accessToken, {
+        path: '/',
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      cookieStore.set('refresh_token', refreshToken, {
+        path: '/',
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 30,
+      });
     } catch {}
   } else {
     document.cookie = `access_token=${encodeURIComponent(accessToken)}; path=/; max-age=${60 * 60 * 24 * 7}`;
@@ -75,7 +85,7 @@ async function setTokens(accessToken: string, refreshToken: string): Promise<voi
   }
 }
 
-async function clearTokens(): Promise<void> {
+export async function clearTokens(): Promise<void> {
   if (typeof window === 'undefined') {
     try {
       const { cookies } = await import('next/headers');
@@ -103,19 +113,55 @@ let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
-  if (!refreshToken) return null;
+  if (!refreshToken) {
+    await clearTokens();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return null;
+  }
 
   try {
-    const { data } = await axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+    const { data } = await axios.post<ApiResponse<{ access_token?: string; accessToken?: string; refresh_token?: string; refreshToken?: string }>>(
       `${env.apiUrl}/auth/refresh`,
       { refreshToken }
     );
-    if (!data.success) return null;
 
-    await setTokens(data.data.accessToken, data.data.refreshToken);
-    return data.data.accessToken;
-  } catch {
+    const resData = data as any;
+    if (!resData?.success || !resData?.data) {
+      const msg = resData?.message || '';
+      await clearTokens();
+      if (typeof window !== 'undefined') {
+        if (msg.toLowerCase().includes('suspended') || msg.toLowerCase().includes('banned')) {
+          alert('Your account has been suspended.');
+        }
+        window.location.href = '/login';
+      }
+      return null;
+    }
+
+    const newAccessToken = resData.data.access_token || resData.data.accessToken;
+    const newRefreshToken = resData.data.refresh_token || resData.data.refreshToken;
+
+    if (!newAccessToken || !newRefreshToken) {
+      await clearTokens();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return null;
+    }
+
+    await setTokens(newAccessToken, newRefreshToken);
+    return newAccessToken;
+  } catch (error: any) {
+    const msg = error?.response?.data?.message || '';
     await clearTokens();
+    if (typeof window !== 'undefined') {
+      if (msg.toLowerCase().includes('suspended') || msg.toLowerCase().includes('banned')) {
+        alert('Your account has been suspended.');
+      }
+      window.location.href = '/login';
+    }
     return null;
   }
 }
@@ -124,13 +170,35 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse<unknown>>) => {
     const originalRequest = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+    const requestUrl = originalRequest?.url || '';
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retried) {
+    const isExcluded =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/register') ||
+      requestUrl.includes('/auth/google') ||
+      requestUrl.includes('/auth/apple') ||
+      requestUrl.includes('/auth/refresh');
+
+    const status = error.response?.status;
+    const body = error.response?.data as any;
+    const message = body?.message || body?.error?.message || '';
+
+    if (message.toLowerCase().includes('suspended') || message.toLowerCase().includes('banned')) {
+      await clearTokens();
+      if (typeof window !== 'undefined') {
+        alert('Your account has been suspended.');
+        window.location.href = '/login';
+      }
+      throw new ApiError('forbidden', message || 'Your account has been suspended', 403);
+    }
+
+    if (status === 401 && originalRequest && !originalRequest._retried && !isExcluded) {
       originalRequest._retried = true;
 
       refreshPromise ??= refreshAccessToken().finally(() => {
         refreshPromise = null;
       });
+
       const newAccessToken = await refreshPromise;
 
       if (newAccessToken) {
@@ -139,10 +207,12 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const body = error.response?.data;
-    if (body && typeof body === 'object' && body.success === false && body.error) {
-      throw new ApiError(body.error.code, body.error.message, error.response?.status);
+    if (body && typeof body === 'object') {
+      const errorMessage = body.message || body.error?.message || error.message;
+      const errorCode = body.error?.code || 'API_ERROR';
+      throw new ApiError(errorCode, errorMessage, status);
     }
-    throw new ApiError('network_error', error.message, error.response?.status);
+
+    throw new ApiError('network_error', error.message, status);
   }
 );

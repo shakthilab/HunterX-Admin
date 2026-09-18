@@ -34,7 +34,8 @@ const tooltipStyle = {
 
 function formatShortDate(d: string) {
   const date = new Date(d);
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (isNaN(date.getTime())) return d;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export function MrrTrendChart({ data }: { data: TrendPoint[] }) {

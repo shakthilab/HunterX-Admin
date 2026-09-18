@@ -12,7 +12,7 @@ export default async function proxy(request: NextRequest) {
   if (userCookie) {
     try {
       const user = JSON.parse(userCookie);
-      if (user.role === 'admin') {
+      if (user?.role && String(user.role).toLowerCase() === 'admin') {
         isAdmin = true;
       }
     } catch {}

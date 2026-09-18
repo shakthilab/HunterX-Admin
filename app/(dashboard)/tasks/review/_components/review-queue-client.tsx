@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import type { PendingReviewItem } from '@/types/task';
 import { decideReview } from '@/lib/api/task-actions';
 import { ArrowLeft, MapPin, Camera, Check, X, ClipboardList, AlertTriangle } from 'lucide-react';
+import { formatDate, formatDateTime } from '@/lib/utils';
 
 export function ReviewQueueClient({ initialReviews }: { initialReviews: PendingReviewItem[] }) {
   const [reviews, setReviews] = React.useState(initialReviews);
@@ -41,7 +42,7 @@ export function ReviewQueueClient({ initialReviews }: { initialReviews: PendingR
 
       {pending.length === 0 ? (
         <Card>
-          <EmptyState icon={ClipboardList} message="No flagged submissions to review." />
+          <EmptyState icon={ClipboardList} message="No data found." />
         </Card>
       ) : (
         <div className="space-y-4">
@@ -54,7 +55,7 @@ export function ReviewQueueClient({ initialReviews }: { initialReviews: PendingR
                     <Badge variant="warning">Pending Review</Badge>
                   </div>
                   <p className="text-sm text-ink-muted mt-1">
-                    {item.userName} · submitted {new Date(item.submittedAt).toLocaleString()}
+                    {item.userName} · submitted {formatDateTime(item.submittedAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

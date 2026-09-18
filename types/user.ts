@@ -65,3 +65,40 @@ export type AuthSession = {
   expiresAt: number;
   user: User;
 };
+
+export type ApiUser = {
+  id: string;
+  hunter_id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+  level: number;
+  rank: string;
+  streak: number;
+  longest_streak: number;
+  status: 'ACTIVE' | 'BANNED' | string;
+  signup_date: string;
+  auth_providers: string[];
+};
+
+export type PaginationInfo = {
+  page: number;
+  limit: number;
+  total_count: number;
+  total_pages: number;
+  has_next_page: boolean;
+};
+
+export type UsersQueryParams = {
+  search?: string;
+  rank?: string;
+  level?: string;
+  status?: string;
+  date_preset?: string;
+  start_date?: string;
+  end_date?: string;
+  sort_by?: string;
+  page?: number;
+  limit?: number;
+};
+

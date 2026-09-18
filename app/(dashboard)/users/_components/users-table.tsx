@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import type { User, UserRank } from '@/types/user';
 import { Search, Mail, Globe, Apple, Flame, UsersRound } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 const RANKS: UserRank[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'mythic'];
 
@@ -133,7 +134,7 @@ export function UsersTable({ users }: { users: User[] }) {
                 <TableCell>
                   <Badge variant={user.status === 'active' ? 'success' : 'danger'}>{user.status}</Badge>
                 </TableCell>
-                <TableCell className="text-ink-muted">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-ink-muted">{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
                   <AuthIcon className="w-4 h-4 text-ink-faint" />
                 </TableCell>
@@ -142,7 +143,7 @@ export function UsersTable({ users }: { users: User[] }) {
           })}
         </TableBody>
       </Table>
-      {filtered.length === 0 && <EmptyState icon={UsersRound} message="No users match your filters." />}
+      {filtered.length === 0 && <EmptyState icon={UsersRound} message="No data found." />}
     </Card>
   );
 }

@@ -60,7 +60,7 @@ function LoginForm() {
             <Input
               label="Email Address"
               type="email"
-              placeholder="admin@arise.com"
+              placeholder="admin@yopmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10"

@@ -8,6 +8,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { EmptyState } from '@/components/ui/empty-state';
 import { Inbox, MapPinned, MessageSquareWarning, CreditCard, UserX, ChevronRight } from 'lucide-react';
 import type { Transaction, PaymentStatus, TopReferrer, ReferralActivity, CouponActivityEntry, NeedsAttentionItem } from '@/types/dashboard';
+import { formatDate } from '@/lib/utils';
 
 const PAYMENT_VARIANT: Record<PaymentStatus, 'success' | 'danger' | 'warning' | 'muted'> = {
   paid: 'success',
@@ -38,10 +39,17 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
             <TableCell>
               <Badge variant={PAYMENT_VARIANT[t.status]}>{t.status}</Badge>
             </TableCell>
-            <TableCell className="text-ink-muted">{new Date(t.date).toLocaleDateString()}</TableCell>
+            <TableCell className="text-ink-muted">{formatDate(t.date)}</TableCell>
             <TableCell className="text-ink-muted">{t.method}</TableCell>
           </TableRow>
         ))}
+        {transactions.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center text-ink-faint py-8">
+              No data found.
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
@@ -71,6 +79,13 @@ export function TopReferrersTable({ referrers }: { referrers: TopReferrer[] }) {
             <TableCell>{r.paidConversions}</TableCell>
           </TableRow>
         ))}
+        {referrers.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center text-ink-faint py-8">
+              No data found.
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
@@ -101,9 +116,16 @@ export function ReferralActivityTable({ activity }: { activity: ReferralActivity
             <TableCell>
               <Badge variant={REFERRAL_STATUS_VARIANT[a.status]}>{a.status.replace('_', ' ')}</Badge>
             </TableCell>
-            <TableCell className="text-ink-muted">{new Date(a.date).toLocaleDateString()}</TableCell>
+            <TableCell className="text-ink-muted">{formatDate(a.date)}</TableCell>
           </TableRow>
         ))}
+        {activity.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center text-ink-faint py-8">
+              No data found.
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
@@ -151,13 +173,13 @@ export function CouponActivityTable({ entries }: { entries: CouponActivityEntry[
               <TableCell>
                 <Badge variant={COUPON_ACTION_VARIANT[e.action]}>{e.action}</Badge>
               </TableCell>
-              <TableCell className="text-ink-muted">{new Date(e.date).toLocaleDateString()}</TableCell>
+              <TableCell className="text-ink-muted">{formatDate(e.date)}</TableCell>
             </TableRow>
           ))}
           {filtered.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-ink-faint py-8">
-                No coupon activity for this partner.
+                No data found.
               </TableCell>
             </TableRow>
           )}
@@ -183,7 +205,7 @@ const ATTENTION_COLOR: Record<NeedsAttentionItem['type'], string> = {
 
 export function NeedsAttentionList({ items }: { items: NeedsAttentionItem[] }) {
   if (items.length === 0) {
-    return <EmptyState icon={Inbox} message="Nothing needs attention right now." />;
+    return <EmptyState icon={Inbox} message="No data found." />;
   }
 
   return (
@@ -204,7 +226,7 @@ export function NeedsAttentionList({ items }: { items: NeedsAttentionItem[] }) {
               <p className="text-xs text-ink-faint truncate">{item.description}</p>
             </div>
             <span className="text-xs text-ink-faint shrink-0 hidden sm:inline">
-              {new Date(item.timestamp).toLocaleDateString()}
+              {formatDate(item.timestamp)}
             </span>
             <ChevronRight className="w-4 h-4 text-ink-faint group-hover:text-ink-muted shrink-0" />
           </Link>

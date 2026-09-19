@@ -7,17 +7,19 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = 'text', label, error, ...props }, ref) => {
+  ({ className, type = 'text', label, error, required, ...props }, ref) => {
     return (
       <div className="w-full space-y-1.5">
         {label && (
           <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
             {label}
+            {required && <span className="text-bad-ink ml-0.5">*</span>}
           </label>
         )}
         <input
           type={type}
           ref={ref}
+          aria-required={required}
           className={cn(
             'w-full px-3.5 py-2.5 rounded-lg border border-line bg-surface-inset/50 text-ink placeholder-ink-faint transition-all duration-200 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent focus:bg-surface-inset focus:shadow-[0_0_15px_rgba(124,58,237,0.15)] disabled:opacity-50 disabled:pointer-events-none',
             error ? 'border-bad-ink focus:border-bad-ink focus:ring-bad-ink' : '',

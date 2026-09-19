@@ -75,7 +75,7 @@ function buildGrid(y: number, m: number): (YMD & { inMonth: boolean })[] {
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
-  ({ label, value, onChange, disabled, className, name, id }, ref) => {
+  ({ label, value, onChange, required, disabled, className, name, id }, ref) => {
     const selected = parseISO(value);
     const t = today();
     const [open, setOpen] = React.useState(false);
@@ -112,13 +112,17 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     return (
       <div className="w-full space-y-1.5" ref={containerRef}>
         {label && (
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">{label}</label>
+          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+            {label}
+            {required && <span className="text-bad-ink ml-0.5">*</span>}
+          </label>
         )}
         <div className="relative">
           <button
             ref={ref}
             type="button"
             id={id}
+            aria-required={required}
             disabled={disabled}
             onClick={() => setOpen((v) => !v)}
             className={cn(

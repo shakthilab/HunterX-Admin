@@ -46,7 +46,7 @@ function LoginForm() {
 
   return (
     <Card glow className="border-line bg-surface-inset/60 shadow-xl">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {error && (
           <div className="flex items-center gap-2.5 p-3.5 rounded-lg border border-red-500/20 bg-red-500/10 text-bad-ink text-sm">
             <AlertTriangle className="w-4.5 h-4.5 shrink-0" />

@@ -87,6 +87,41 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Accent-tinted text selection instead of the browser's default blue */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* Hide the native up/down stepper on number inputs — an OS-drawn widget
+   that doesn't follow the app's theme (Target Value, XP Reward, etc). */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Keep inputs on the app's dark surface through browser autofill instead of
+   Chrome/Edge's default light-yellow fill. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-inset) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Edge draws its own reveal/clear icons inside password fields, which
+   overlaps the app's own icon layout (see the login form). */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
 /* Pop-in used by custom dropdown/date-picker panels (see use-popover-placement) */
 @keyframes popover-in {
   from {

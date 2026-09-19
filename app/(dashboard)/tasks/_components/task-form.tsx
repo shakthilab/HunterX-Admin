@@ -103,6 +103,8 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
 
   const isValid =
     form.title.trim().length > 0 &&
+    form.description.trim().length > 0 &&
+    form.tag.trim().length > 0 &&
     form.targetUnit.trim().length > 0 &&
     form.xpReward > 0 &&
     form.xpReward <= cap &&
@@ -131,7 +133,7 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="max-w-4xl mx-auto space-y-6">
       <Card className="space-y-5">
         <SectionHeader title="Basic Info" description="What hunters will see for this task." />
         <Input label="Title" value={form.title} onChange={(e) => update('title', e.target.value)} required />

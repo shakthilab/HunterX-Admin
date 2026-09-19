@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -187,17 +188,15 @@ export function TaskForm({ initialTask }: { initialTask?: Task }) {
           </div>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
+          <DatePicker
             label="Start Date"
-            type="date"
             value={toDateInput(form.startDate)}
             onChange={(e) => update('startDate', e.target.value || null)}
             required
           />
           {form.isRecurring && (
-            <Input
+            <DatePicker
               label="End Date"
-              type="date"
               value={toDateInput(form.endDate)}
               onChange={(e) => update('endDate', e.target.value || null)}
               required

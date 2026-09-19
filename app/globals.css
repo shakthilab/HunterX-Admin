@@ -87,6 +87,32 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Pop-in used by custom dropdown/date-picker panels (see use-popover-placement) */
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.popover-pop {
+  animation: popover-in 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.popover-pop[data-placement='top'] {
+  transform-origin: bottom;
+}
+.popover-pop[data-placement='bottom'] {
+  transform-origin: top;
+}
+@media (prefers-reduced-motion: reduce) {
+  .popover-pop {
+    animation: none;
+  }
+}
+
 /* Thin, theme-matched scrollbars instead of the bulky OS default */
 * {
   scrollbar-width: thin;

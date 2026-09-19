@@ -6,6 +6,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Badge } from '@/components/ui/badge';
 import { RankBadge } from '@/components/rank-badge';
 import { StatCard } from '@/components/stat-card';
@@ -411,21 +412,23 @@ export function UsersClient() {
             <span className="font-medium text-ink">Custom Date Range:</span>
             <div className="flex items-center gap-2">
               <label className="text-ink-faint">Start:</label>
-              <input
-                type="date"
-                value={currentStartDate}
-                onChange={(e) => updateFilters({ start_date: e.target.value })}
-                className="bg-surface border border-line rounded px-2 py-1 text-ink focus:outline-none focus:border-accent"
-              />
+              <div className="w-36">
+                <DatePicker
+                  value={currentStartDate}
+                  onChange={(e) => updateFilters({ start_date: e.target.value })}
+                  className="px-2 py-1 text-xs"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <label className="text-ink-faint">End:</label>
-              <input
-                type="date"
-                value={currentEndDate}
-                onChange={(e) => updateFilters({ end_date: e.target.value })}
-                className="bg-surface border border-line rounded px-2 py-1 text-ink focus:outline-none focus:border-accent"
-              />
+              <div className="w-36">
+                <DatePicker
+                  value={currentEndDate}
+                  onChange={(e) => updateFilters({ end_date: e.target.value })}
+                  className="px-2 py-1 text-xs"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -549,16 +552,18 @@ export function UsersClient() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span>Per page:</span>
-                <select
-                  value={pagination.limit}
-                  onChange={(e) => updateFilters({ limit: Number(e.target.value), page: 1 })}
-                  className="bg-surface border border-line rounded px-2 py-1 text-ink focus:outline-none focus:border-accent text-xs"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+                <div className="w-18">
+                  <Select
+                    value={pagination.limit}
+                    onChange={(e) => updateFilters({ limit: Number(e.target.value), page: 1 })}
+                    className="px-2 py-1 text-xs"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
